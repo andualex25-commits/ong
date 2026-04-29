@@ -1,0 +1,21 @@
+---
+members:
+  - name: "Purcaru Lamiita"
+    role: "Președinte"
+    image: "/images/team-lamiita.jpg"
+  - name: "Silviu Purcaru"
+    role: "Membru fondator"
+    image: "/images/team-silviu.jpg"
+  - name: "Mihaela Bunea"
+    role: "Implementare proiect"
+    image: "/images/team-mihaela.jpg"
+  - name: "Andreea Pădureț"
+    role: "Voluntar"
+    image: "/images/team-andreea.jpg"
+  - name: "Alexandra Raduta"
+    role: "Voluntar"
+    image: "/images/team-alexandra.jpg"
+  - name: "Carina Neagoe"
+    role: "Voluntar"
+    image: "/images/team-carina.jpg"
+---

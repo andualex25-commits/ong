@@ -1,0 +1,166 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const presets = [50, 100, 200, 500];
+---
+
+<Layout
+  title="Donează — Educația Schimbă Destine"
+  description="Donează prin card sau redirecționează 3,5% din impozit. 100% din donație merge direct către copiii sprijiniți de asociație."
+>
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow">Donează</span>
+      <h1>Transformă o viață cu o donație.</h1>
+      <p>Donație unică sau lunară, prin card. 100% din donație merge direct către copiii sprijiniți.</p>
+    </div>
+  </section>
+
+  <section class="tight">
+    <div class="container">
+      <div class="donate-panel">
+        <div class="donate-options">
+          <div class="donate-tabs" role="tablist">
+            <button class="donate-tab active" data-mode="payment" type="button">Donație unică</button>
+            <button class="donate-tab" data-mode="subscription" type="button">Donație lunară</button>
+          </div>
+
+          <div class="amounts">
+            {presets.map((amt, i) => (
+              <button
+                class={`amount ${i === 1 ? 'active' : ''}`}
+                data-amount={amt}
+                type="button"
+              >
+                {amt} RON
+                <small>{
+                  amt === 50  ? 'rechizite 1 copil' :
+                  amt === 100 ? 'masă caldă 1 lună' :
+                  amt === 200 ? 'transport școlar' :
+                                'set complet de școală'
+                }</small>
+              </button>
+            ))}
+          </div>
+
+          <div class="form-field" style="margin-bottom:16px">
+            <label for="custom-amount">Sau introdu suma dorită (RON)</label>
+            <input id="custom-amount" type="number" min="5" step="1" placeholder="ex. 75">
+          </div>
+
+          <div class="form-field">
+            <label for="donor-email">Email (pentru chitanță)</label>
+            <input id="donor-email" type="email" placeholder="adresa.ta@email.ro" required>
+          </div>
+
+          <div class="impact-note">
+            🛡️ Plata se face securizat prin Stripe. Nu stocăm datele cardului tău.
+          </div>
+
+          <button id="donate-btn" class="btn btn-primary" type="button" style="width:100%;justify-content:center">
+            Continuă spre plată →
+          </button>
+          <p id="donate-error" style="color:#a04a1f;font-size:0.88rem;margin-top:12px;display:none"></p>
+        </div>
+
+        <div class="donate-side">
+          <h3>De ce donezi?</h3>
+          <ul>
+            <li>100% din donație merge direct către copii.</li>
+            <li>Primești chitanță pe email pentru deducerea fiscală.</li>
+            <li>Donație lunară = sprijin predictibil pentru burse și hub.</li>
+            <li>Te poți opri oricând, din contul tău Stripe.</li>
+          </ul>
+
+          <h3 style="margin-top:32px" id="redirect">Redirect 3,5% impozit</h3>
+          <p>
+            Dacă ești salariat, poți redirecționa 3,5% din impozitul pe venit
+            către asociație, fără niciun cost. Descarcă <strong>formularul 230</strong>
+            pre-completat și depune-l la ANAF până pe 25 mai.
+          </p>
+          <a href="/formular-230.pdf" class="btn btn-ghost btn-sm">Descarcă formularul →</a>
+
+          <h3 style="margin-top:32px" id="transfer">Transfer bancar</h3>
+          <p>
+            <strong>Asociația Educația Schimbă Destine</strong><br>
+            CIF: 49395736<br>
+            <span class="iban">RO30 RZBR 0000 0600 2578 2550</span><br>
+            <small>Raiffeisen Bank · București</small>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    let mode: 'payment' | 'subscription' = 'payment';
+    let amount = 100;
+
+    const tabs = document.querySelectorAll<HTMLButtonElement>('.donate-tab');
+    const amounts = document.querySelectorAll<HTMLButtonElement>('.amount');
+    const customInput = document.getElementById('custom-amount') as HTMLInputElement;
+    const emailInput = document.getElementById('donor-email') as HTMLInputElement;
+    const btn = document.getElementById('donate-btn') as HTMLButtonElement;
+    const errorEl = document.getElementById('donate-error') as HTMLParagraphElement;
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        mode = tab.dataset.mode as 'payment' | 'subscription';
+      });
+    });
+
+    amounts.forEach(a => {
+      a.addEventListener('click', () => {
+        amounts.forEach(x => x.classList.remove('active'));
+        a.classList.add('active');
+        amount = Number(a.dataset.amount);
+        customInput.value = '';
+      });
+    });
+
+    customInput.addEventListener('input', () => {
+      const val = Number(customInput.value);
+      if (val > 0) {
+        amounts.forEach(x => x.classList.remove('active'));
+        amount = val;
+      }
+    });
+
+    btn.addEventListener('click', async () => {
+      errorEl.style.display = 'none';
+
+      const email = emailInput.value.trim();
+      if (!email || !email.includes('@')) {
+        errorEl.textContent = 'Te rugăm să introduci un email valid pentru chitanță.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (amount < 5) {
+        errorEl.textContent = 'Suma minimă este 5 RON.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Te redirecționăm către plată...';
+
+      try {
+        const res = await fetch('/api/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, mode, email }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Eroare la inițializarea plății.');
+        window.location.href = data.url;
+      } catch (err: any) {
+        errorEl.textContent = err.message || 'Eroare necunoscută. Te rugăm să încerci din nou.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Continuă spre plată →';
+      }
+    });
+  </script>
+</Layout>

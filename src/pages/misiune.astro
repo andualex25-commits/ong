@@ -1,0 +1,97 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="Misiune — Educația Schimbă Destine"
+  description="Cele 6 direcții ale Asociației Educația Schimbă Destine: asistență materială, sprijin emoțional, educație, dezvoltare comunitară, siguranță și incluziune."
+>
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow">Misiunea noastră</span>
+      <h1>Șase direcții. Un singur obiectiv: copilul.</h1>
+      <p>Ce facem, cum facem și de ce contează fiecare gest de sprijin.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="mission-grid">
+        <div class="mission-card">
+          <div class="mission-num">01</div>
+          <h3>Misiunea noastră</h3>
+          <p>Construim un viitor strălucitor pentru copiii care se confruntă cu lipsuri și dificultăți. Oferim nu doar asistență materială, ci și sprijin emoțional, educativ și social — contribuim la dezvoltarea personală a fiecărui copil.</p>
+        </div>
+        <div class="mission-card">
+          <div class="mission-num">02</div>
+          <h3>Suntem hotărâți</h3>
+          <p>Creăm un mediu în care fiecare copil se simte iubit, protejat și încurajat să-și urmeze visele. În colaborare cu comunitățile locale, dezvoltăm programe personalizate care abordează nevoile specifice ale copiilor și familiilor lor.</p>
+        </div>
+        <div class="mission-card">
+          <div class="mission-num">03</div>
+          <h3>Cum ajutăm</h3>
+          <p>
+            <strong>Asistență materială:</strong> alimente, haine, resurse esențiale.<br>
+            <strong>Educație:</strong> burse școlare, materiale didactice, programe de dezvoltare.<br>
+            <strong>Dezvoltare comunitară:</strong> medii sigure și sănătoase pentru copii.
+          </p>
+        </div>
+        <div class="mission-card">
+          <div class="mission-num">04</div>
+          <h3>Fiecare gest contează</h3>
+          <p>
+            <strong>Donații unice sau lunare</strong> pentru programele noastre.<br>
+            <strong>Voluntariat</strong> — implică-te activ în proiecte.<br>
+            <strong>Împărtășire</strong> — spune mai departe povestea copiilor noștri.
+          </p>
+        </div>
+        <div class="mission-card">
+          <div class="mission-num">05</div>
+          <h3>Copilărie fericită</h3>
+          <p>Credem că fiecare copil are dreptul la o copilărie fericită și la o șansă echitabilă în viață. Alătură-te nouă în construirea unui viitor mai bun pentru copiii în dificultate.</p>
+        </div>
+        <div class="mission-card">
+          <div class="mission-num">06</div>
+          <h3>Alătură-te nouă</h3>
+          <p>O schimbare începe cu oricine. Donează pentru micuții noștri care vor deveni oameni mari.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:var(--bg-alt)">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Implică-te</span>
+        <h2>Nu e nevoie doar de bani. E nevoie de tine.</h2>
+      </div>
+      <div class="involve-grid">
+        <div class="involve">
+          <div class="involve-icon">♥</div>
+          <h3>Donează</h3>
+          <p>Donație unică sau lunară, prin card, transfer bancar sau redirecționarea a 3,5% din impozit.</p>
+          <a href="/doneaza" class="btn btn-dark btn-sm">Donează acum</a>
+        </div>
+        <div class="involve">
+          <div class="involve-icon">✋</div>
+          <h3>Voluntariază</h3>
+          <p>Ore de meditație, evenimente, logistică, comunicare — orice talent e binevenit.</p>
+          <a href="/contact" class="btn btn-dark btn-sm">Aplică →</a>
+        </div>
+        <div class="involve">
+          <div class="involve-icon">↗</div>
+          <h3>Distribuie</h3>
+          <p>Spune mai departe. Un share poate aduce următorul donator sau voluntar.</p>
+          <a href="#" id="share-btn" class="btn btn-dark btn-sm">Distribuie</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    document.getElementById('share-btn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigator.share?.({ title: 'Educația Schimbă Destine', url: location.origin });
+    });
+  </script>
+</Layout>

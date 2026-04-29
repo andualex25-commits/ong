@@ -1,0 +1,52 @@
+---
+const currentPath = Astro.url.pathname;
+
+const NAV = [
+  { href: '/',         label: 'Acasă' },
+  { href: '/despre',   label: 'Despre' },
+  { href: '/misiune',  label: 'Misiune' },
+  { href: '/proiecte', label: 'Proiecte' },
+  { href: '/echipa',   label: 'Echipa' },
+  { href: '/contact',  label: 'Contact' },
+];
+
+const isActive = (href: string) => {
+  if (href === '/') return currentPath === '/';
+  return currentPath.startsWith(href);
+};
+---
+
+<div class="announce">
+  Redirecționează <strong>3,5%</strong> din impozit — fără niciun cost pentru tine.
+  <a href="/doneaza#redirect">Vezi cum →</a>
+</div>
+
+<header class="site">
+  <div class="container nav">
+    <a href="/" class="logo" aria-label="Educația Schimbă Destine">
+      <span class="logo-mark">E</span>
+      <span class="logo-text">
+        Educația Schimbă Destine
+        <small>Asociație · România</small>
+      </span>
+    </a>
+    <nav class="nav-links" id="nav-links" aria-label="Principal">
+      {NAV.map(n => (
+        <a href={n.href} class={isActive(n.href) ? 'active' : ''}>{n.label}</a>
+      ))}
+    </nav>
+    <div class="nav-cta">
+      <a href="/doneaza#redirect" class="btn btn-ghost btn-sm">3,5% impozit</a>
+      <a href="/doneaza" class="btn btn-primary btn-sm">Donează</a>
+      <button class="burger" aria-label="Meniu" id="burger">☰</button>
+    </div>
+  </div>
+</header>
+
+<script>
+  const burger = document.getElementById('burger');
+  const nav = document.getElementById('nav-links');
+  if (burger && nav) {
+    burger.addEventListener('click', () => nav.classList.toggle('open'));
+  }
+</script>

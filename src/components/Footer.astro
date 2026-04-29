@@ -1,0 +1,91 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="site">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">
+          <span class="logo-mark">E</span>
+          <span class="logo-text">
+            Educația Schimbă Destine
+            <small>Asociație · România</small>
+          </span>
+        </div>
+        <p>Sprijinim copiii din medii vulnerabile prin educație, materiale și comunitate.</p>
+        <div class="social" aria-label="Urmărește-ne">
+          <a href="https://facebook.com" aria-label="Facebook">f</a>
+          <a href="https://instagram.com" aria-label="Instagram">◎</a>
+          <a href="mailto:educatiaschimbadestine@gmail.com" aria-label="Email">@</a>
+        </div>
+      </div>
+      <div>
+        <h4>Navigare</h4>
+        <ul>
+          <li><a href="/">Acasă</a></li>
+          <li><a href="/despre">Despre noi</a></li>
+          <li><a href="/misiune">Misiune</a></li>
+          <li><a href="/proiecte">Proiecte</a></li>
+          <li><a href="/echipa">Echipa</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Donații</h4>
+        <ul>
+          <li><a href="/doneaza">Donație online</a></li>
+          <li><a href="/doneaza#redirect">Redirect 3,5%</a></li>
+          <li><a href="/doneaza#transfer">Transfer bancar</a></li>
+          <li><a href="/doneaza#firme">Sponsorizare firme</a></li>
+          <li><a href="/doneaza#produse">Donație în produse</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Date juridice</h4>
+        <ul>
+          <li><strong style="color:#fff">Asociația Educația Schimbă Destine</strong></li>
+          <li>CIF: 49395736</li>
+          <li>București, România</li>
+          <li>0721 314 855</li>
+          <li><a href="mailto:educatiaschimbadestine@gmail.com">educatiaschimbadestine@gmail.com</a></li>
+          <li style="font-family:monospace;font-size:0.8rem;margin-top:10px">RO30 RZBR 0000 0600 2578 2550</li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <div>© {year} Asociația Educația Schimbă Destine. Toate drepturile rezervate.</div>
+      <div>
+        <a href="#">Termeni</a> · <a href="#">Confidențialitate</a> · <a href="#">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<a href="/doneaza" class="sticky-donate">Donează acum →</a>
+
+<div class="cookie show" id="cookie">
+  <strong>Folosim cookies</strong>
+  <p style="margin:6px 0 0;color:var(--ink-soft);font-size:0.85rem">
+    Folosim cookies pentru a îmbunătăți experiența ta pe site. Vezi <a href="#">politica noastră</a>.
+  </p>
+  <div class="cookie-actions">
+    <button class="btn btn-dark btn-sm" id="cookie-accept">Accept</button>
+    <button class="btn btn-ghost btn-sm" id="cookie-reject">Doar necesare</button>
+  </div>
+</div>
+
+<script>
+  const cookie = document.getElementById('cookie');
+  if (cookie) {
+    if (localStorage.getItem('cookie-ack')) cookie.classList.remove('show');
+    document.getElementById('cookie-accept')?.addEventListener('click', () => {
+      localStorage.setItem('cookie-ack', '1');
+      cookie.classList.remove('show');
+    });
+    document.getElementById('cookie-reject')?.addEventListener('click', () => {
+      localStorage.setItem('cookie-ack', '1');
+      cookie.classList.remove('show');
+    });
+  }
+</script>

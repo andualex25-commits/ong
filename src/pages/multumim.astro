@@ -1,0 +1,29 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const sessionId = Astro.url.searchParams.get('session_id');
+---
+
+<Layout title="Mulțumim! — Educația Schimbă Destine">
+  <section class="page-head">
+    <div class="container" style="max-width:640px">
+      <span class="eyebrow">Mulțumim</span>
+      <h1>Donația ta a ajuns. ❤️</h1>
+      <p>
+        Datorită ție, un copil va avea rechizite, o masă caldă sau un loc sigur
+        unde să învețe. Vei primi în curând un email cu chitanța donației.
+      </p>
+
+      <div style="margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="/" class="btn btn-primary">Înapoi acasă</a>
+        <a href="/proiecte" class="btn btn-ghost">Vezi proiectele</a>
+      </div>
+
+      {sessionId && (
+        <p style="margin-top:32px;font-size:0.8rem;color:var(--muted)">
+          Referință tranzacție: <code>{sessionId}</code>
+        </p>
+      )}
+    </div>
+  </section>
+</Layout>

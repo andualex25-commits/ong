@@ -1,0 +1,70 @@
+backend:
+  name: github
+  repo: [USERNAME]/educatia-schimba-destine
+  branch: main
+  auth_endpoint: auth
+  base_url: https://e-sd.ro
+
+media_folder: public/images
+public_path: /images
+
+collections:
+  - name: pages
+    label: Pagini
+    files:
+      - name: home
+        label: Acasă
+        file: src/content/home.md
+        fields:
+          - { label: Titlu Hero, name: hero_title, widget: string }
+          - { label: Descriere Hero, name: hero_description, widget: text }
+          - { label: Imagine Hero, name: hero_image, widget: image }
+          - { label: Titlu Proiect Featured, name: featured_title, widget: string }
+          - { label: Descriere Proiect, name: featured_description, widget: text }
+          - { label: Imagine Proiect, name: featured_image, widget: image }
+
+      - name: despre
+        label: Despre
+        file: src/content/despre.md
+        fields:
+          - { label: Imagine Lamiita, name: founder_image, widget: image }
+          - { label: Biografie, name: body, widget: markdown }
+
+      - name: echipa
+        label: Echipa
+        file: src/content/echipa.md
+        fields:
+          - name: members
+            label: Membri
+            widget: list
+            fields:
+              - { label: Nume, name: name, widget: string }
+              - { label: Rol, name: role, widget: string }
+              - { label: Imagine, name: image, widget: image }
+
+  - name: beneficiari
+    label: Beneficiari
+    folder: src/content/beneficiari
+    create: true
+    fields:
+      - { label: Nume, name: title, widget: string }
+      - { label: Vârstă, name: age, widget: string }
+      - { label: Tag (ex: Urgent, În curs), name: tag, widget: string }
+      - { label: Descriere, name: body, widget: markdown }
+      - { label: Imagine, name: image, widget: image }
+      - name: needs
+        label: Nevoi
+        widget: list
+        field: { label: Nevoie, name: need, widget: string }
+
+  - name: proiecte
+    label: Proiecte
+    folder: src/content/proiecte
+    create: true
+    fields:
+      - { label: Titlu, name: title, widget: string }
+      - { label: Descriere, name: body, widget: markdown }
+      - { label: Imagine, name: image, widget: image }
+      - { label: Locație, name: location, widget: string }
+      - { label: Beneficiari, name: beneficiari, widget: string }
+      - { label: Status (În desfășurare, Finalizat), name: status, widget: string }

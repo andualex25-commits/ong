@@ -1,0 +1,50 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const team = [
+  { role: 'Președinte',          name: 'Purcaru Lamiita',  shade: '' },
+  { role: 'Membru fondator',     name: 'Silviu Purcaru',   shade: 'b' },
+  { role: 'Implementare proiect',name: 'Mihaela Bunea',    shade: 'c' },
+  { role: 'Voluntar',            name: 'Andreea Pădureț',  shade: 'd' },
+  { role: 'Voluntar',            name: 'Alexandra Raduta', shade: 'e' },
+  { role: 'Voluntar',            name: 'Carina Neagoe',    shade: 'f' },
+];
+---
+
+<Layout
+  title="Echipa — Educația Schimbă Destine"
+  description="Echipa Asociației Educația Schimbă Destine: Lamiita Purcaru, Silviu Purcaru, Mihaela Bunea, Andreea Pădureț, Alexandra Raduta, Carina Neagoe."
+>
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow">Pentru că doar împreună putem</span>
+      <h1>Echipa noastră</h1>
+      <p>Oameni care cred că educația schimbă destine — și care muncesc zilnic pentru ca asta să fie adevărat pentru cât mai mulți copii.</p>
+    </div>
+  </section>
+
+  <section class="tight">
+    <div class="container">
+      <div class="team-grid">
+        {team.map(m => (
+          <div class="member">
+            <div class={`member-portrait ${m.shade}`}><div class="ph">Foto</div></div>
+            <div class="member-body">
+              <div class="member-role">{m.role}</div>
+              <h3 class="member-name">{m.name}</h3>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style="text-align:center;margin-top:64px">
+        <h2 style="margin-bottom:12px">Vrei să ni te alături?</h2>
+        <p style="color:var(--ink-soft);max-width:52ch;margin:0 auto 24px">
+          Căutăm voluntari pentru mentorat, evenimente, comunicare, fotografiere
+          și logistică. Orice talent e binevenit.
+        </p>
+        <a href="/contact" class="btn btn-primary">Aplică pentru voluntariat</a>
+      </div>
+    </div>
+  </section>
+</Layout>
