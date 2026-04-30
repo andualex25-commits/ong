@@ -1,0 +1,126 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<script src="/admin-uploader.js" is:inline></script>
+
+<Layout title="Edit Povestea fondatoarei — Admin" description="Edit founder story">
+  <div style="min-height:100vh;background:var(--bg-alt);">
+    <div style="padding:16px 24px;background:white;border-bottom:1px solid #eee;">
+      <a href="/admin/dashboard" style="color:var(--primary);text-decoration:none;font-size:14px;">← Dashboard</a>
+      <h1 style="margin:8px 0 0;font-size:18px;">Povestea fondatoarei</h1>
+    </div>
+
+    <div class="container" style="padding:32px 0;max-width:720px;">
+      <div id="founderForm" style="background:white;border-radius:8px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <p style="color:#999;text-align:center;">Se încarcă...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const authToken = localStorage.getItem('supabase.auth.token');
+    if (!authToken) window.location.href = '/admin/login';
+
+    const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL;
+    const SUPABASE_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+    function getToken() { return JSON.parse(authToken).access_token; }
+
+    async function api(method, path, body) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        method,
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${getToken()}`,
+          'Content-Type': 'application/json',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (res.status === 204) return { success: true };
+      return res.json();
+    }
+
+    let founderId = null;
+
+    function field(label, id, value, multiline = false) {
+      if (multiline) {
+        return `<div style="margin-bottom:20px;">
+          <label style="display:block;margin-bottom:6px;font-weight:600;font-size:14px;">${label}</label>
+          <textarea id="${id}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;min-height:120px;font-family:inherit;font-size:14px;resize:vertical;">${value || ''}</textarea>
+        </div>`;
+      }
+      return `<div style="margin-bottom:20px;">
+        <label style="display:block;margin-bottom:6px;font-weight:600;font-size:14px;">${label}</label>
+        <input id="${id}" type="text" value="${(value || '').replace(/"/g, '&quot;')}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:14px;" />
+      </div>`;
+    }
+
+    async function load() {
+      const data = await api('GET', 'founder_story?limit=1');
+      const f = data[0] || {};
+      founderId = f.id || null;
+
+      document.getElementById('founderForm').innerHTML = `
+        <h2 style="margin:0 0 24px;font-size:18px;">Editează povestea fondatoarei</h2>
+        ${field('Eyebrow (text mic deasupra)', 'eyebrow', f.eyebrow)}
+        ${field('Citat (fără ghilimele)', 'quote', f.quote)}
+        ${field('Descriere completă', 'description', f.description, true)}
+        ${field('Nume autor', 'author_name', f.author_name)}
+        ${field('Titlu autor', 'author_title', f.author_title)}
+        <div style="margin-bottom:20px;">
+          <label style="display:block;margin-bottom:6px;font-weight:600;font-size:14px;">Fotografie</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="image_url" type="text" value="${(f.image_url || '').replace(/"/g, '&quot;')}" placeholder="https://..." style="flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:14px;" />
+            <button type="button" id="uploadPhotoBtn" style="padding:10px 16px;background:var(--primary);color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;">📷 Încarcă</button>
+          </div>
+          ${f.image_url ? `<img id="photoPreview" src="${f.image_url}" style="margin-top:10px;max-height:90px;border-radius:6px;border:1px solid #eee;" />` : '<div id="photoPreview"></div>'}
+        </div>
+        <div id="saveMsg" style="padding:12px;border-radius:6px;display:none;font-size:14px;margin-bottom:16px;"></div>
+        <button id="saveFounderBtn" style="width:100%;padding:14px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:15px;">Salvează modificările ✓</button>
+      `;
+
+      // Upload button
+      document.getElementById('uploadPhotoBtn').onclick = () => {
+        AdminUploader.open({
+          supabaseUrl: SUPABASE_URL,
+          supabaseKey: SUPABASE_KEY,
+          getToken,
+          currentUrl: document.getElementById('image_url').value || '',
+          title: 'Fotografie fondatoare',
+          onSave: async (url) => {
+            document.getElementById('image_url').value = url;
+            const prev = document.getElementById('photoPreview');
+            prev.outerHTML = `<img id="photoPreview" src="${url}" style="margin-top:10px;max-height:90px;border-radius:6px;border:1px solid #eee;" />`;
+          },
+        });
+      };
+
+      // Save button
+      document.getElementById('saveFounderBtn').onclick = async () => {
+        const msg = document.getElementById('saveMsg');
+        msg.style.display = 'block'; msg.style.background = '#eef'; msg.style.color = '#33c'; msg.textContent = 'Se salvează...';
+        const body = {
+          eyebrow: document.getElementById('eyebrow').value,
+          quote: document.getElementById('quote').value,
+          description: document.getElementById('description').value,
+          author_name: document.getElementById('author_name').value,
+          author_title: document.getElementById('author_title').value,
+          image_url: document.getElementById('image_url').value || null,
+        };
+        try {
+          if (founderId) {
+            await api('PATCH', `founder_story?id=eq.${founderId}`, body);
+          } else {
+            await api('POST', 'founder_story', body);
+          }
+          msg.style.background = '#efe'; msg.style.color = '#3c3'; msg.textContent = '✓ Salvat cu succes! Pagina /despre a fost actualizată.';
+        } catch(e) {
+          msg.style.background = '#fee'; msg.style.color = '#c33'; msg.textContent = 'Eroare: ' + e.message;
+        }
+      };
+    }
+
+    load();
+  </script>
+</Layout>

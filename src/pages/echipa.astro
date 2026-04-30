@@ -1,14 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
 
-const team = [
-  { role: 'Președinte',          name: 'Purcaru Lamiita',  shade: '' },
-  { role: 'Membru fondator',     name: 'Silviu Purcaru',   shade: 'b' },
-  { role: 'Implementare proiect',name: 'Mihaela Bunea',    shade: 'c' },
-  { role: 'Voluntar',            name: 'Andreea Pădureț',  shade: 'd' },
-  { role: 'Voluntar',            name: 'Alexandra Raduta', shade: 'e' },
-  { role: 'Voluntar',            name: 'Carina Neagoe',    shade: 'f' },
-];
+const [teamRes, sectionsRes] = await Promise.all([
+  supabase.from('team_members').select('*').order('order_index'),
+  supabase.from('page_sections').select('*').eq('section_key', 'echipa_head').single(),
+]);
+
+const team    = teamRes.data    || [];
+const headSec = sectionsRes.data || {};
 ---
 
 <Layout
@@ -17,21 +17,44 @@ const team = [
 >
   <section class="page-head">
     <div class="container">
-      <span class="eyebrow">Pentru că doar împreună putem</span>
-      <h1>Echipa noastră</h1>
-      <p>Oameni care cred că educația schimbă destine — și care muncesc zilnic pentru ca asta să fie adevărat pentru cât mai mulți copii.</p>
+      <span class="eyebrow"
+        data-db-table="page_sections" data-db-id={headSec.id} data-db-field="eyebrow"
+      >{headSec.eyebrow || 'Pentru că doar împreună putem'}</span>
+      <h1
+        data-db-table="page_sections" data-db-id={headSec.id} data-db-field="heading"
+      >{headSec.heading || 'Echipa noastră'}</h1>
+      <p
+        data-db-table="page_sections" data-db-id={headSec.id} data-db-field="subheading"
+      >{headSec.subheading || 'Oameni care cred că educația schimbă destine — și care muncesc zilnic pentru ca asta să fie adevărat pentru cât mai mulți copii.'}</p>
     </div>
   </section>
 
   <section class="tight">
     <div class="container">
-      <div class="team-grid">
-        {team.map(m => (
+      <div class="team-grid" data-db-section-add="team_members">
+        {team.map((m, i) => (
           <div class="member">
-            <div class={`member-portrait ${m.shade}`}><div class="ph">Foto</div></div>
+            <div class={`member-portrait ${String.fromCharCode(97 + (i % 6))}`}
+              data-db-table="team_members" data-db-id={m.id} data-db-field="image_url"
+              style="overflow:hidden;"
+            >
+              {m.image_url
+                ? <img src={m.image_url} alt={m.name} style="width:100%;height:100%;object-fit:cover;" />
+                : <div class="ph">Foto</div>
+              }
+            </div>
             <div class="member-body">
-              <div class="member-role">{m.role}</div>
-              <h3 class="member-name">{m.name}</h3>
+              <div class="member-role"
+                data-db-table="team_members" data-db-id={m.id} data-db-field="role"
+              >{m.role}</div>
+              <h3 class="member-name"
+                data-db-table="team_members" data-db-id={m.id} data-db-field="name"
+              >{m.name}</h3>
+              {m.bio && (
+                <p style="font-size:13px;color:var(--ink-soft);margin:4px 0 0;"
+                  data-db-table="team_members" data-db-id={m.id} data-db-field="bio"
+                >{m.bio}</p>
+              )}
             </div>
           </div>
         ))}

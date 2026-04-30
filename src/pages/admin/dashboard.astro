@@ -1,0 +1,92 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Admin Dashboard — Educația Schimbă Destine" description="Manage site content">
+  <div style="min-height:100vh;background:var(--bg-alt);">
+    <div class="container" style="padding:32px 0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
+        <div>
+          <h1 style="margin:0 0 4px;">Dashboard Admin</h1>
+          <p style="margin:0;color:var(--ink-soft);font-size:14px;">Conectat ca: <strong id="userEmail"></strong></p>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <a href="/" target="_blank" style="padding:10px 20px;background:white;border:1px solid #ddd;border-radius:6px;text-decoration:none;color:inherit;font-size:14px;font-weight:500;">Vizualizează site →</a>
+          <button id="logoutBtn" style="padding:10px 20px;background:white;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-weight:500;">Logout</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+
+        <a href="/admin/edit/home" style="text-decoration:none;color:inherit;">
+          <div style="background:white;padding:24px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'">
+            <div style="font-size:28px;margin-bottom:12px;">🏠</div>
+            <h3 style="margin:0 0 6px;">Acasă</h3>
+            <p style="color:var(--ink-soft);margin:0;font-size:13px;">Hero, proiect pilot, povești, carduri misiune</p>
+          </div>
+        </a>
+
+        <a href="/admin/edit/proiecte" style="text-decoration:none;color:inherit;">
+          <div style="background:white;padding:24px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'">
+            <div style="font-size:28px;margin-bottom:12px;">📊</div>
+            <h3 style="margin:0 0 6px;">Proiecte</h3>
+            <p style="color:var(--ink-soft);margin:0;font-size:13px;">Proiecte active și povești beneficiari</p>
+          </div>
+        </a>
+
+        <a href="/admin/edit/despre" style="text-decoration:none;color:inherit;">
+          <div style="background:white;padding:24px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'">
+            <div style="font-size:28px;margin-bottom:12px;">ℹ️</div>
+            <h3 style="margin:0 0 6px;">Despre noi</h3>
+            <p style="color:var(--ink-soft);margin:0;font-size:13px;">Povestea fondatoarei, citat, biografie</p>
+          </div>
+        </a>
+
+        <a href="/admin/edit/misiune" style="text-decoration:none;color:inherit;">
+          <div style="background:white;padding:24px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'">
+            <div style="font-size:28px;margin-bottom:12px;">🎯</div>
+            <h3 style="margin:0 0 6px;">Misiune</h3>
+            <p style="color:var(--ink-soft);margin:0;font-size:13px;">Cele 6 direcții de acțiune, secțiunea Implică-te</p>
+          </div>
+        </a>
+
+        <a href="/admin/edit/echipa" style="text-decoration:none;color:inherit;">
+          <div style="background:white;padding:24px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'">
+            <div style="font-size:28px;margin-bottom:12px;">👥</div>
+            <h3 style="margin:0 0 6px;">Echipa</h3>
+            <p style="color:var(--ink-soft);margin:0;font-size:13px;">Membri, roluri, fotografii</p>
+          </div>
+        </a>
+
+      </div>
+
+      <div style="margin-top:32px;background:white;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <h3 style="margin:0 0 12px;font-size:15px;">Cum funcționează?</h3>
+        <ul style="margin:0;padding-left:20px;color:var(--ink-soft);font-size:14px;line-height:1.8;">
+          <li>Apasă pe o secțiune din meniu pentru a o edita</li>
+          <li>Modificările se salvează direct în baza de date</li>
+          <li>Site-ul afișează noile date la orice refresh al paginii (SSR)</li>
+          <li>Poți folosi linkuri Google Drive pentru fotografii — vor fi convertite automat</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const authToken = localStorage.getItem('supabase.auth.token');
+    if (!authToken) {
+      window.location.href = '/admin/login';
+    } else {
+      try {
+        const auth = JSON.parse(authToken);
+        document.getElementById('userEmail').textContent = auth.user?.email || 'Unknown';
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+          localStorage.removeItem('supabase.auth.token');
+          window.location.href = '/admin/login';
+        });
+      } catch(e) {
+        window.location.href = '/admin/login';
+      }
+    }
+  </script>
+</Layout>

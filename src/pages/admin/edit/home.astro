@@ -1,0 +1,507 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<script src="/admin-uploader.js" is:inline></script>
+<Layout title="Edit Acasă — Admin" description="Edit home page content">
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }
+    #root { display: flex; flex-direction: column; height: 100vh; }
+    #topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; height: 52px; background: #1a1a2e; color: white;
+      flex-shrink: 0; gap: 16px; z-index: 10;
+    }
+    #topbar a, #topbar button {
+      color: white; text-decoration: none; font-size: 13px;
+      padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1); cursor: pointer; font-weight: 500;
+      transition: background 0.15s;
+    }
+    #topbar a:hover, #topbar button:hover { background: rgba(255,255,255,0.2); }
+    #topbar .title { flex: 1; font-size: 14px; font-weight: 600; letter-spacing: 0.3px; }
+    #frameWrap { flex: 1; position: relative; overflow: hidden; }
+    #siteFrame { width: 100%; height: 100%; border: none; display: block; }
+    #loader {
+      position: absolute; inset: 0; background: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; color: #999; z-index: 5;
+    }
+
+    /* ── Edit Modal ── */
+    .modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65); z-index: 2000;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-bg.open { display: flex; }
+    .modal-box {
+      background: white; border-radius: 14px; padding: 32px;
+      max-width: 560px; width: 100%; box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+      animation: pop 0.18s ease;
+    }
+    @keyframes pop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-box h2 { margin: 0 0 20px; font-size: 18px; }
+    .modal-close { float: right; background: none; border: none; font-size: 22px; cursor: pointer; color: #aaa; line-height: 1; margin-top: -4px; }
+    .modal-close:hover { color: #333; }
+    .current-val {
+      padding: 12px 16px; background: #f6f7ff; border-left: 4px solid var(--primary);
+      border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #555;
+      white-space: pre-wrap; word-break: break-word; max-height: 80px; overflow: hidden;
+    }
+    .modal-box label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 8px; color: #444; }
+    .modal-box textarea {
+      width: 100%; padding: 12px; border: 2px solid var(--primary);
+      border-radius: 8px; box-sizing: border-box; min-height: 110px;
+      font-family: inherit; font-size: 14px; resize: vertical; line-height: 1.5;
+    }
+    .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+    .btn-cancel { padding: 12px; background: #f0f0f0; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    .btn-save { padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    .msg { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-top: 12px; display: none; }
+
+    /* ── Add Card Modal ── */
+    .add-modal-box { max-width: 520px; }
+    .add-modal-box input, .add-modal-box textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 7px;
+      box-sizing: border-box; font-family: inherit; font-size: 14px; margin-top: 6px;
+    }
+    .add-modal-box input:focus, .add-modal-box textarea:focus { border-color: var(--primary); outline: none; }
+    .add-field { margin-bottom: 16px; }
+    .add-field label { font-weight: 600; font-size: 13px; color: #444; }
+    .add-field small { display: block; color: #999; font-size: 12px; margin-top: 2px; }
+  </style>
+
+  <div id="root">
+    <div id="topbar">
+      <a href="/admin/dashboard">← Dashboard</a>
+      <span class="title">✏️ Editează Acasă — apasă pe orice text albastru</span>
+      <a href="/" target="_blank">Vizualizează live ↗</a>
+    </div>
+    <div id="frameWrap">
+      <div id="loader">Se încarcă previzualizarea...</div>
+      <iframe id="siteFrame" src="/"></iframe>
+    </div>
+  </div>
+
+  <!-- Edit Field Modal -->
+  <div id="editModal" class="modal-bg">
+    <div class="modal-box">
+      <button class="modal-close" id="editClose">✕</button>
+      <h2 id="editTitle">Editează</h2>
+      <div class="current-val" id="editCurrent"></div>
+      <label id="editLabel">Valoare nouă</label>
+      <textarea id="editField"></textarea>
+      <div class="msg" id="editMsg"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="editCancel">Anulează</button>
+        <button class="btn-save" id="editSave">Salvează ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Card Modal -->
+  <div id="addModal" class="modal-bg">
+    <div class="modal-box add-modal-box">
+      <button class="modal-close" id="addClose">✕</button>
+      <h2 id="addTitle">Card nou</h2>
+      <div id="addFields"></div>
+      <div class="msg" id="addMsg"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="addCancel">Anulează</button>
+        <button class="btn-save" id="addSave">Adaugă ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const authToken = localStorage.getItem('supabase.auth.token');
+    if (!authToken) window.location.href = '/admin/login';
+
+    const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL;
+    const SUPABASE_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+    function getToken() { return JSON.parse(authToken).access_token; }
+
+    async function dbFetch(path) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${getToken()}` },
+      });
+      return r.json();
+    }
+
+    async function dbPatch(table, id, body) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok && r.status !== 204) { const e = await r.json(); throw new Error(e.message || `HTTP ${r.status}`); }
+    }
+
+    async function dbPost(table, body) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.message || `HTTP ${r.status}`); }
+      return r.json();
+    }
+
+    // ── iframe ─────────────────────────────────────────────────────────────
+    const frame = document.getElementById('siteFrame');
+    const loader = document.getElementById('loader');
+
+    let currentAddTable = null;
+    let editState = { table: null, id: null, field: null };
+
+    frame.addEventListener('load', async () => {
+      const doc = frame.contentDocument;
+      if (!doc || doc.body === null) return;
+      loader.style.display = 'none';
+
+      // Block all navigation inside iframe
+      doc.addEventListener('click', (e) => {
+        const a = e.target.closest('a');
+        if (a && !a.hasAttribute('data-db-table')) e.preventDefault();
+      }, true);
+
+      injectAdminStyles(doc);
+      injectAdminBar(doc);
+      injectEditHandlers(doc);
+      injectAddButtons(doc);
+      injectDeleteButtons(doc);
+    });
+
+    function injectAdminStyles(doc) {
+      const s = doc.createElement('style');
+      s.id = 'admin-overlay-css';
+      s.textContent = `
+        /* Text fields */
+        [data-db-table]:not([data-db-field="image_url"]) {
+          cursor: pointer !important;
+          outline: 2px dashed transparent;
+          outline-offset: 3px;
+          transition: outline-color 0.12s, background 0.12s;
+          border-radius: 3px;
+        }
+        [data-db-table]:not([data-db-field="image_url"]):hover {
+          outline-color: #3366ff !important;
+          background: rgba(51,102,255,0.07) !important;
+        }
+
+        /* Image zones */
+        [data-db-field="image_url"] {
+          cursor: pointer !important;
+          position: relative;
+          transition: filter 0.15s;
+        }
+        [data-db-field="image_url"]::after {
+          content: "📷  Clică pentru a încărca fotografie";
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(51,102,255,0.75);
+          color: white; font-size: 14px; font-weight: 600;
+          border-radius: 8px; opacity: 0;
+          transition: opacity 0.15s;
+          pointer-events: none;
+          text-align: center; padding: 12px;
+        }
+        [data-db-field="image_url"]:hover::after { opacity: 1; }
+
+        /* Admin bar */
+        .admin-bar {
+          position: sticky; top: 0; z-index: 9999;
+          background: #1a1a2e; color: white;
+          text-align: center; padding: 9px 16px;
+          font-size: 12px; font-weight: 500; letter-spacing: 0.3px;
+        }
+        .admin-bar span { opacity: 0.7; }
+
+        /* Add buttons */
+        .admin-add-btn {
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; margin-top: 20px; padding: 18px;
+          background: transparent; border: 2px dashed rgba(51,102,255,0.35);
+          border-radius: 10px; cursor: pointer;
+          color: #3366ff; font-size: 14px; font-weight: 600;
+          transition: all 0.15s;
+        }
+        .admin-add-btn:hover { background: rgba(51,102,255,0.06); border-color: #3366ff; }
+
+        /* Delete buttons on cards */
+        .admin-delete-btn {
+          position: absolute !important; top: 8px !important; right: 8px !important;
+          background: #dc2626 !important; color: white !important; border: none !important;
+          width: 30px !important; height: 30px !important; border-radius: 50% !important;
+          font-size: 18px !important; font-weight: 700 !important; line-height: 1 !important;
+          cursor: pointer !important; display: flex !important;
+          align-items: center !important; justify-content: center !important;
+          opacity: 0 !important; transition: opacity 0.15s !important;
+          z-index: 200 !important; box-shadow: 0 2px 8px rgba(220,38,38,0.5) !important;
+        }
+        .mission-card { position: relative !important; }
+        .story { position: relative !important; overflow: visible !important; }
+        .mission-card:hover .admin-delete-btn,
+        .story:hover .admin-delete-btn { opacity: 1 !important; }
+      `;
+      doc.head.appendChild(s);
+    }
+
+    function injectAdminBar(doc) {
+      const bar = doc.createElement('div');
+      bar.className = 'admin-bar';
+      bar.innerHTML = '✏️ MOD EDITARE &nbsp;·&nbsp; <span>apasă pe orice text subliniat cu albastru pentru a-l edita</span>';
+      doc.body.prepend(bar);
+    }
+
+    function injectEditHandlers(doc) {
+      doc.querySelectorAll('[data-db-table]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const { dbTable, dbId, dbField } = el.dataset;
+
+          if (dbField === 'image_url') {
+            // Route to the uploader widget
+            const currentUrl = el.querySelector('img')?.src || '';
+            AdminUploader.open({
+              supabaseUrl: SUPABASE_URL,
+              supabaseKey: SUPABASE_KEY,
+              getToken,
+              currentUrl,
+              title: 'Încarcă fotografie',
+              onSave: async (url) => {
+                await dbPatch(dbTable, dbId, { image_url: url });
+                reloadFrame();
+              },
+            });
+          } else {
+            openEditModal(dbTable, dbId, dbField, el.textContent.trim());
+          }
+        });
+      });
+    }
+
+    function injectDeleteButtons(doc) {
+      const selectors = [
+        { css: '.mission-card', table: 'mission_cards' },
+        { css: '.story', table: 'beneficiary_stories' },
+      ];
+      selectors.forEach(({ css, table }) => {
+        doc.querySelectorAll(css).forEach(card => {
+          const dbEl = card.querySelector('[data-db-id]');
+          if (!dbEl) return;
+          const id = dbEl.dataset.dbId;
+          const tbl = dbEl.dataset.dbTable || table;
+          const btn = doc.createElement('button');
+          btn.className = 'admin-delete-btn';
+          btn.title = 'Șterge';
+          btn.textContent = '×';
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            confirmDelete(tbl, id);
+          });
+          card.appendChild(btn);
+        });
+      });
+    }
+
+    async function dbDelete(table, id) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${getToken()}` },
+      });
+      if (!r.ok && r.status !== 204) {
+        const e = await r.json();
+        alert('Eroare la ștergere: ' + (e.message || r.status));
+        return;
+      }
+      reloadFrame();
+    }
+
+    function confirmDelete(table, id) {
+      if (!confirm('Ești sigur că vrei să ștergi? Această acțiune nu poate fi anulată.')) return;
+      dbDelete(table, id);
+    }
+
+    function injectAddButtons(doc) {
+      doc.querySelectorAll('[data-db-section-add]').forEach(section => {
+        const table = section.dataset.dbSectionAdd;
+        const labels = {
+          mission_cards: '+ Adaugă card misiune',
+          beneficiary_stories: '+ Adaugă poveste beneficiar',
+        };
+        const btn = doc.createElement('button');
+        btn.className = 'admin-add-btn';
+        btn.textContent = labels[table] || `+ Adaugă`;
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openAddModal(table);
+        });
+        section.parentElement.insertBefore(btn, section.nextSibling);
+      });
+    }
+
+    // ── Edit Modal ──────────────────────────────────────────────────────────
+    function openEditModal(table, id, field, currentVal) {
+      editState = { table, id, field };
+      document.getElementById('editTitle').textContent = `Editează: ${field}`;
+      document.getElementById('editCurrent').textContent = currentVal || '(gol)';
+      document.getElementById('editField').value = currentVal || '';
+      showMsg('editMsg', '', '');
+      document.getElementById('editModal').classList.add('open');
+      setTimeout(() => document.getElementById('editField').focus(), 80);
+    }
+
+    function closeEditModal() { document.getElementById('editModal').classList.remove('open'); }
+
+    document.getElementById('editClose').onclick = closeEditModal;
+    document.getElementById('editCancel').onclick = closeEditModal;
+    document.getElementById('editModal').onclick = (e) => { if (e.target === document.getElementById('editModal')) closeEditModal(); };
+
+    document.getElementById('editSave').onclick = async () => {
+      const { table, id, field } = editState;
+      const val = document.getElementById('editField').value;
+      showMsg('editMsg', 'Se salvează...', 'info');
+      try {
+        await dbPatch(table, id, { [field]: val });
+        showMsg('editMsg', '✓ Salvat! Se reîncarcă previzualizarea...', 'ok');
+        setTimeout(() => {
+          closeEditModal();
+          reloadFrame();
+        }, 900);
+      } catch(e) {
+        showMsg('editMsg', 'Eroare: ' + e.message, 'err');
+      }
+    };
+
+    // ── Add Card Modal ──────────────────────────────────────────────────────
+    const addSchemas = {
+      mission_cards: {
+        title: 'Card misiune nou',
+        fields: [
+          { id: 'mc_number', label: 'Număr', type: 'number', hint: 'ex: 7' },
+          { id: 'mc_title', label: 'Titlu *', type: 'text' },
+          { id: 'mc_desc', label: 'Descriere', type: 'textarea' },
+        ],
+        build: (f, count) => ({
+          number: parseInt(f.mc_number) || count + 1,
+          title: f.mc_title,
+          description: f.mc_desc || null,
+          order_index: count + 1,
+        }),
+        required: ['mc_title'],
+      },
+      beneficiary_stories: {
+        title: 'Poveste nouă',
+        fields: [
+          { id: 'st_title', label: 'Titlu *', type: 'text', hint: 'ex: Maria, 14 ani — elev la liceu' },
+          { id: 'st_tag', label: 'Tag', type: 'text', hint: 'ex: Urgent · Bursă' },
+          { id: 'st_desc', label: 'Descriere', type: 'textarea' },
+          { id: 'st_age', label: 'Vârstă', type: 'number' },
+          { id: 'st_img', label: 'Fotografie', type: 'image' },
+        ],
+        build: (f, count) => ({
+          title: f.st_title,
+          tag: f.st_tag || null,
+          description: f.st_desc || null,
+          age: parseInt(f.st_age) || null,
+          image_url: f.st_img || null,
+          order_index: count + 1,
+        }),
+        required: ['st_title'],
+      },
+    };
+
+    function openAddModal(table) {
+      currentAddTable = table;
+      const schema = addSchemas[table];
+      if (!schema) return;
+      document.getElementById('addTitle').textContent = schema.title;
+      document.getElementById('addFields').innerHTML = schema.fields.map(f => `
+        <div class="add-field">
+          <label for="${f.id}">${f.label}</label>
+          ${f.hint ? `<small>${f.hint}</small>` : ''}
+          ${f.type === 'textarea'
+            ? `<textarea id="${f.id}" rows="3"></textarea>`
+            : f.type === 'image'
+              ? `<div style="display:flex;gap:8px;align-items:center;">
+                   <input id="${f.id}" type="text" placeholder="https://..." style="flex:1;padding:9px 12px;border:1px solid #ddd;border-radius:7px;font-size:14px;font-family:inherit;" />
+                   <button type="button" onclick="openAddImageUploader('${f.id}')" style="padding:8px 14px;background:var(--primary);color:white;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;">📷 Încarcă</button>
+                 </div>`
+              : `<input id="${f.id}" type="${f.type}" />`
+          }
+        </div>
+      `).join('');
+      showMsg('addMsg', '', '');
+      document.getElementById('addModal').classList.add('open');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.remove('open');
+      currentAddTable = null;
+    }
+
+    document.getElementById('addClose').onclick = closeAddModal;
+    document.getElementById('addCancel').onclick = closeAddModal;
+    document.getElementById('addModal').onclick = (e) => { if (e.target === document.getElementById('addModal')) closeAddModal(); };
+
+    document.getElementById('addSave').onclick = async () => {
+      const schema = addSchemas[currentAddTable];
+      if (!schema) return;
+
+      const vals = {};
+      for (const f of schema.fields) vals[f.id] = document.getElementById(f.id)?.value?.trim() || '';
+
+      for (const req of schema.required) {
+        if (!vals[req]) { showMsg('addMsg', 'Completează câmpurile obligatorii (*)','err'); return; }
+      }
+
+      showMsg('addMsg', 'Se adaugă...', 'info');
+      try {
+        const countData = await dbFetch(`${currentAddTable}?select=id`);
+        const body = schema.build(vals, countData.length);
+        await dbPost(currentAddTable, body);
+        showMsg('addMsg', '✓ Adăugat! Se reîncarcă...', 'ok');
+        setTimeout(() => { closeAddModal(); reloadFrame(); }, 900);
+      } catch(e) {
+        showMsg('addMsg', 'Eroare: ' + e.message, 'err');
+      }
+    };
+
+    // ── Image upload from inside add-card modals ─────────────────────────
+    window.openAddImageUploader = (fieldId) => {
+      const current = document.getElementById(fieldId)?.value || '';
+      AdminUploader.open({
+        supabaseUrl: SUPABASE_URL,
+        supabaseKey: SUPABASE_KEY,
+        getToken,
+        currentUrl: current,
+        title: 'Încarcă fotografie',
+        onSave: async (url) => {
+          const input = document.getElementById(fieldId);
+          if (input) input.value = url;
+        },
+      });
+    };
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    function reloadFrame() {
+      loader.style.display = 'flex';
+      frame.src = '/';
+    }
+
+    function showMsg(id, text, type) {
+      const el = document.getElementById(id);
+      if (!text) { el.style.display = 'none'; return; }
+      el.style.display = 'block';
+      el.style.background = type === 'ok' ? '#edfaed' : type === 'err' ? '#fdecea' : '#eef0ff';
+      el.style.color = type === 'ok' ? '#276 ' : type === 'err' ? '#b33' : '#335';
+      el.textContent = text;
+    }
+  </script>
+</Layout>

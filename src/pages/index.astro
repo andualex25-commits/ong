@@ -1,242 +1,327 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+
+const [heroRes, heroStatsRes, partnerRes, projectRes, cardsRes, storiesRes, founderRes, sectionsRes] = await Promise.all([
+  supabase.from('hero_content').select('*').eq('page', 'home').single(),
+  supabase.from('hero_stats').select('*').order('order_index'),
+  supabase.from('partner_logos').select('*').order('order_index'),
+  supabase.from('featured_projects').select('*').order('order_index').limit(1),
+  supabase.from('mission_cards').select('*').order('order_index'),
+  supabase.from('beneficiary_stories').select('*').order('order_index'),
+  supabase.from('founder_story').select('*').single(),
+  supabase.from('page_sections').select('*'),
+]);
+
+const hero = heroRes.data;
+const heroStats = heroStatsRes.data || [];
+const partners = partnerRes.data || [];
+const project = projectRes.data?.[0];
+const missionCards = cardsRes.data || [];
+const stories = storiesRes.data || [];
+const founder = founderRes.data;
+
+const sectionsArr = sectionsRes.data || [];
+const sections: Record<string, any> = {};
+for (const s of sectionsArr) sections[s.section_key] = s;
+
+const mission   = sections['home_mission']      || {};
+const storiesSec = sections['home_stories']     || {};
+const donateSec  = sections['home_donate']      || {};
+const transpSec  = sections['home_transparency'] || {};
+const founderSec = sections['home_founder']     || {};
+const partnerSec = sections['home_partners']    || {};
 ---
 
 <Layout title="Educația Schimbă Destine — ONG pentru copii vulnerabili">
+
+  <!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
   <section class="hero">
     <div class="container hero-grid">
       <div>
-        <span class="eyebrow">Copii · Educație · Comunitate</span>
-        <h1>Pentru că doar împreună <span>putem</span>.</h1>
-        <p class="lede">
-          Sprijinim copiii din medii vulnerabile din România cu rechizite, burse,
-          hrană și mentorat — pentru că un copil care învață astăzi are mâine o
-          șansă reală să iasă din sărăcie.
-        </p>
+        <span class="eyebrow"
+          data-db-table="hero_content" data-db-id={hero?.id} data-db-field="eyebrow"
+        >{hero?.eyebrow || 'Copii · Educație · Comunitate'}</span>
+        <h1
+          data-db-table="hero_content" data-db-id={hero?.id} data-db-field="title"
+        >{hero?.title || 'Pentru că doar împreună putem.'}</h1>
+        <p class="lede"
+          data-db-table="hero_content" data-db-id={hero?.id} data-db-field="description"
+        >{hero?.description || 'Sprijinim copiii din medii vulnerabile din România cu rechizite, burse, hrană și mentorat — pentru că un copil care învață astăzi are mâine o șansă reală să iasă din sărăcie.'}</p>
         <div class="hero-cta">
-          <a href="/doneaza" class="btn btn-primary">Implică-te</a>
-          <a href="/proiecte" class="btn btn-ghost">Vezi proiectele</a>
+          {hero?.cta_primary_text && (
+            <a href={hero.cta_primary_link || '/doneaza'} class="btn btn-primary"
+              data-db-table="hero_content" data-db-id={hero?.id} data-db-field="cta_primary_text"
+            >{hero.cta_primary_text}</a>
+          )}
+          {hero?.cta_secondary_text && (
+            <a href={hero.cta_secondary_link || '/proiecte'} class="btn btn-ghost"
+              data-db-table="hero_content" data-db-id={hero?.id} data-db-field="cta_secondary_text"
+            >{hero.cta_secondary_text}</a>
+          )}
         </div>
         <div class="hero-stats">
-          <div class="stat"><div class="num">120+</div><div class="label">copii sprijiniți</div></div>
-          <div class="stat"><div class="num">6</div><div class="label">direcții active</div></div>
-          <div class="stat"><div class="num">2024</div><div class="label">anul înființării</div></div>
+          {heroStats.length > 0 ? heroStats.map(stat => (
+            <div class="stat">
+              <div class="num" data-db-table="hero_stats" data-db-id={stat.id} data-db-field="stat_number">{stat.stat_number}</div>
+              <div class="label" data-db-table="hero_stats" data-db-id={stat.id} data-db-field="stat_label">{stat.stat_label}</div>
+            </div>
+          )) : (
+            <>
+              <div class="stat"><div class="num">120+</div><div class="label">copii sprijiniți</div></div>
+              <div class="stat"><div class="num">6</div><div class="label">direcții active</div></div>
+              <div class="stat"><div class="num">2024</div><div class="label">anul înființării</div></div>
+            </>
+          )}
         </div>
       </div>
-      <div class="hero-image">
-        <div class="ph">Înlocuiește cu foto autentică<br>(ex: copil la Hubul Călătoria Cunoașterii)</div>
+      <div class="hero-image"
+        data-db-table="hero_content" data-db-id={hero?.id} data-db-field="image_url"
+      >
+        {hero?.image_url
+          ? <img src={hero.image_url} alt={hero.image_alt || ''} style="width:100%;height:100%;object-fit:cover;border-radius:12px;" />
+          : <div class="ph">Înlocuiește cu foto autentică<br>(ex: copil la Hubul Călătoria Cunoașterii)</div>
+        }
         <div class="hero-badge">
           <div class="hero-badge-icon">★</div>
           <div class="hero-badge-text">
-            <strong>Proiect nou deschis</strong>
-            Călătoria Cunoașterii · Dâmbovița
+            <strong data-db-table="hero_content" data-db-id={hero?.id} data-db-field="badge_title"
+            >{hero?.badge_title || 'Proiect nou deschis'}</strong>
+            <span data-db-table="hero_content" data-db-id={hero?.id} data-db-field="badge_description"
+            >{hero?.badge_description || 'Călătoria Cunoașterii · Dâmbovița'}</span>
           </div>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- ══ PARTENERI ═════════════════════════════════════════════════════════ -->
   <section class="partners tight">
     <div class="container">
       <div class="partners-row">
-        <span class="partners-label">Susținuți de</span>
-        <div class="partner-logo">Partener 1</div>
-        <div class="partner-logo">Partener 2</div>
-        <div class="partner-logo">Partener 3</div>
-        <div class="partner-logo">Partener 4</div>
+        <span class="partners-label"
+          data-db-table="page_sections" data-db-id={partnerSec.id} data-db-field="eyebrow"
+        >{partnerSec.eyebrow || 'Susținuți de'}</span>
+        {partners.length > 0 ? partners.map(p => (
+          <div class="partner-logo"
+            data-db-table="partner_logos" data-db-id={p.id} data-db-field="name"
+          >{p.name}</div>
+        )) : (
+          <>
+            <div class="partner-logo">Partener 1</div>
+            <div class="partner-logo">Partener 2</div>
+            <div class="partner-logo">Partener 3</div>
+            <div class="partner-logo">Partener 4</div>
+          </>
+        )}
       </div>
     </div>
   </section>
 
+  <!-- ══ PROIECT FEATURED ═══════════════════════════════════════════════════ -->
+  {project && (
   <section>
     <div class="container">
       <div class="project">
         <div>
-          <span class="eyebrow">Proiect pilot</span>
-          <h2>Hub Educațional „Călătoria Cunoașterii"</h2>
-          <p>
-            Din noiembrie 2024, la Școala Gimnazială „Spiru Haret" din Braniștea,
-            județul Dâmbovița, am deschis un Hub educațional dedicat copiilor
-            vulnerabili din clasele pregătitoare și primare.
-          </p>
-          <p>
-            Este un spațiu primitor și creativ — mai mult decât un loc de joacă.
-            Copiii descoperă, explorează, învață și își dezvoltă încrederea în
-            propriile forțe, prin activități interactive îndrumate cu grijă.
-          </p>
+          <span class="eyebrow"
+            data-db-table="featured_projects" data-db-id={project.id} data-db-field="eyebrow"
+          >{project.eyebrow || 'Proiect pilot'}</span>
+          <h2 data-db-table="featured_projects" data-db-id={project.id} data-db-field="title">{project.title}</h2>
+          <p data-db-table="featured_projects" data-db-id={project.id} data-db-field="description">{project.description}</p>
           <div class="project-meta">
-            <div><strong>Braniștea, Dâmbovița</strong><span style="opacity:.7">locație</span></div>
-            <div><strong>Clasele 0–IV</strong><span style="opacity:.7">beneficiari</span></div>
-            <div><strong>Noi 2024 →</strong><span style="opacity:.7">deschis</span></div>
+            {project.location && <div><strong data-db-table="featured_projects" data-db-id={project.id} data-db-field="location">{project.location}</strong><span style="opacity:.7">locație</span></div>}
+            {project.target_age && <div><strong data-db-table="featured_projects" data-db-id={project.id} data-db-field="target_age">{project.target_age}</strong><span style="opacity:.7">beneficiari</span></div>}
+            {project.status && <div><strong data-db-table="featured_projects" data-db-id={project.id} data-db-field="status">{project.status}</strong><span style="opacity:.7">deschis</span></div>}
           </div>
           <div class="hero-cta">
-            <a href="/doneaza" class="btn btn-primary">Susține proiectul</a>
-            <a href="/proiecte" class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,0.4)">Detalii →</a>
+            {project.cta_primary_text && (
+              <a href={project.cta_primary_link || '/doneaza'} class="btn btn-primary"
+                data-db-table="featured_projects" data-db-id={project.id} data-db-field="cta_primary_text"
+              >{project.cta_primary_text}</a>
+            )}
+            {project.cta_secondary_text && (
+              <a href={project.cta_secondary_link || '/proiecte'} class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,0.4)"
+                data-db-table="featured_projects" data-db-id={project.id} data-db-field="cta_secondary_text"
+              >{project.cta_secondary_text}</a>
+            )}
           </div>
         </div>
-        <div class="project-image"><div class="ph">Foto: copii la Hubul Călătoria Cunoașterii</div></div>
+        <div class="project-image"
+          data-db-table="featured_projects" data-db-id={project.id} data-db-field="image_url"
+        >
+          {project.image_url
+            ? <img src={project.image_url} alt={project.image_alt || project.title} style="width:100%;height:100%;object-fit:cover;border-radius:12px;" />
+            : <div class="ph">Foto: {project.title}</div>
+          }
+        </div>
       </div>
     </div>
   </section>
+  )}
 
+  <!-- ══ MISIUNE ════════════════════════════════════════════════════════════ -->
   <section style="background:var(--bg-alt)">
     <div class="container">
       <div class="section-head">
-        <span class="eyebrow">Misiunea noastră</span>
-        <h2>Șase direcții. Un singur obiectiv: copilul.</h2>
-        <p>Acționăm direct, fără intermediari, în comunitățile unde nevoia e cea mai mare.</p>
+        <span class="eyebrow"
+          data-db-table="page_sections" data-db-id={mission.id} data-db-field="eyebrow"
+        >{mission.eyebrow || 'Misiunea noastră'}</span>
+        <h2 data-db-table="page_sections" data-db-id={mission.id} data-db-field="heading"
+        >{mission.heading || 'Șase direcții. Un singur obiectiv: copilul.'}</h2>
+        <p data-db-table="page_sections" data-db-id={mission.id} data-db-field="subheading"
+        >{mission.subheading || 'Acționăm direct, fără intermediari, în comunitățile unde nevoia e cea mai mare.'}</p>
       </div>
-      <div class="mission-grid">
-        <div class="mission-card">
-          <div class="mission-num">01</div>
-          <h3>Misiunea noastră</h3>
-          <p>Construim un viitor strălucitor pentru copiii care se confruntă cu lipsuri și dificultăți — prin asistență materială, sprijin emoțional, educativ și social.</p>
-        </div>
-        <div class="mission-card">
-          <div class="mission-num">02</div>
-          <h3>Suntem hotărâți</h3>
-          <p>Creăm un mediu în care fiecare copil se simte iubit, protejat și încurajat să-și urmeze visele. Lucrăm cu comunitățile locale pentru programe personalizate.</p>
-        </div>
-        <div class="mission-card">
-          <div class="mission-num">03</div>
-          <h3>Cum ajutăm</h3>
-          <p>Asistență materială (alimente, haine), acces la educație de calitate, burse, materiale didactice și dezvoltare comunitară.</p>
-        </div>
-        <div class="mission-card">
-          <div class="mission-num">04</div>
-          <h3>Fiecare gest contează</h3>
-          <p>Donații unice sau lunare, voluntariat, distribuirea poveștii noastre — orice gest aduce o schimbare reală.</p>
-        </div>
-        <div class="mission-card">
-          <div class="mission-num">05</div>
-          <h3>Copilărie fericită</h3>
-          <p>Credem că fiecare copil are dreptul la o copilărie fericită și la o șansă echitabilă în viață. Muncim ca acest drept să devină realitate.</p>
-        </div>
-        <div class="mission-card">
-          <div class="mission-num">06</div>
-          <h3>Alătură-te nouă</h3>
-          <p>O schimbare începe cu oricine. Donează pentru cei mici care vor deveni oameni mari.</p>
-        </div>
+      <div class="mission-grid" data-db-section-add="mission_cards">
+        {missionCards.map((card) => (
+          <div class="mission-card">
+            <div class="mission-num">{String(card.number).padStart(2, '0')}</div>
+            <h3 data-db-table="mission_cards" data-db-id={card.id} data-db-field="title">{card.title}</h3>
+            <p data-db-table="mission_cards" data-db-id={card.id} data-db-field="description">{card.description}</p>
+          </div>
+        ))}
       </div>
       <div style="text-align:center;margin-top:48px">
-        <a href="/misiune" class="btn btn-ghost">Citește tot despre misiune →</a>
+        <a href={mission.cta_primary_link || '/misiune'} class="btn btn-ghost"
+          data-db-table="page_sections" data-db-id={mission.id} data-db-field="cta_primary_text"
+        >{mission.cta_primary_text || 'Citește tot despre misiune →'}</a>
       </div>
     </div>
   </section>
 
+  <!-- ══ POVEȘTI ════════════════════════════════════════════════════════════ -->
   <section>
     <div class="container">
       <div class="section-head">
-        <span class="eyebrow">Poveștile beneficiarilor</span>
-        <h2>Fiecare donație are un nume și un chip.</h2>
-        <p>Sunt copii și familii reale pe care le sprijinim chiar acum.</p>
+        <span class="eyebrow"
+          data-db-table="page_sections" data-db-id={storiesSec.id} data-db-field="eyebrow"
+        >{storiesSec.eyebrow || 'Poveștile beneficiarilor'}</span>
+        <h2 data-db-table="page_sections" data-db-id={storiesSec.id} data-db-field="heading"
+        >{storiesSec.heading || 'Fiecare donație are un nume și un chip.'}</h2>
+        <p data-db-table="page_sections" data-db-id={storiesSec.id} data-db-field="subheading"
+        >{storiesSec.subheading || 'Sunt copii și familii reale pe care le sprijinim chiar acum.'}</p>
       </div>
-      <div class="stories">
-        <article class="story">
-          <div class="story-image a"><div class="ph">Foto: Alexandra Marghioala</div></div>
-          <div class="story-body">
-            <span class="story-tag">În curs · Educație superioară</span>
-            <h3>Alexandra, 20 ani — studentă la psihologie</h3>
-            <p>
-              Nevăzătoare și imobilizată de la naștere într-un scaun cu rotile,
-              Alexandra a terminat liceul cu note mari și s-a înscris la
-              Facultatea de Psihologie la Pitești. Tatăl ei o duce zilnic la
-              cursuri, 110 km dus-întors.
-            </p>
-            <div class="story-needs">
-              <strong>Cum o putem ajuta:</strong>
-              <ul>
-                <li>Mașină adaptată nevoilor sale</li>
-                <li>Scaun cu rotile nou</li>
-                <li>Imprimantă pentru proiecte</li>
-                <li>Produse de igienă</li>
-              </ul>
+      <div class="stories" data-db-section-add="beneficiary_stories">
+        {stories.map((story, i) => (
+          <article class="story">
+            <div class={`story-image ${String.fromCharCode(97 + i)}`}
+              data-db-table="beneficiary_stories" data-db-id={story.id} data-db-field="image_url"
+            >
+              {story.image_url
+                ? <img src={story.image_url} alt={story.image_alt || story.title} style="width:100%;height:100%;object-fit:cover;" />
+                : <div class="ph">Foto: {story.title}</div>
+              }
             </div>
-            <a href="/doneaza" class="btn btn-dark btn-sm">Susține pe Alexandra</a>
-          </div>
-        </article>
-
-        <article class="story">
-          <div class="story-image b"><div class="ph">Foto: Familia Dragomir</div></div>
-          <div class="story-body">
-            <span class="story-tag">Urgent · Familie cu 6 copii</span>
-            <h3>Familia Dragomir din Cuparu — 6 copii</h3>
-            <p>
-              Locuiesc de 13 ani într-un bloc abandonat din satul Cuparu, județul
-              Dâmbovița. Urmează să fie evacuați. Cel mai mic, de 9 luni, s-a
-              născut cu hidrocefalie. Părinții luptă zilnic pentru ca cei mici să
-              nu abandoneze școala.
-            </p>
-            <div class="story-needs">
-              <strong>Cum îi putem ajuta:</strong>
-              <ul>
-                <li>Rechizite pentru cei 6 copii</li>
-                <li>Haine și produse de igienă</li>
-                <li>Lapte praf, pampers, alimente</li>
-                <li>Decontare transport la școală</li>
-              </ul>
+            <div class="story-body">
+              {story.tag && (
+                <span class="story-tag"
+                  data-db-table="beneficiary_stories" data-db-id={story.id} data-db-field="tag"
+                >{story.tag}</span>
+              )}
+              <h3 data-db-table="beneficiary_stories" data-db-id={story.id} data-db-field="title">{story.title}</h3>
+              <p data-db-table="beneficiary_stories" data-db-id={story.id} data-db-field="description">{story.description}</p>
+              <a href={storiesSec.cta_primary_link || '/doneaza'} class="btn btn-dark btn-sm"
+                data-db-table="page_sections" data-db-id={storiesSec.id} data-db-field="cta_primary_text"
+              >{storiesSec.cta_primary_text || 'Susține'}</a>
             </div>
-            <a href="/doneaza" class="btn btn-dark btn-sm">Ajută familia</a>
-          </div>
-        </article>
+          </article>
+        ))}
       </div>
     </div>
   </section>
 
+  <!-- ══ FONDATOARE ═════════════════════════════════════════════════════════ -->
+  {founder && (
   <section>
     <div class="container">
       <div class="founder">
-        <div class="founder-portrait"><div class="ph">Lamiita Purcaru<br>(înlocuiește cu foto)</div></div>
+        <div class="founder-portrait"
+          data-db-table="founder_story" data-db-id={founder.id} data-db-field="image_url"
+        >
+          {founder.image_url
+            ? <img src={founder.image_url} alt={founder.image_alt || founder.author_name || 'Lamiita Purcaru'} style="width:100%;height:100%;object-fit:cover;border-radius:12px;" />
+            : <div class="ph">{founder.author_name || 'Lamiita Purcaru'}</div>
+          }
+        </div>
         <div>
-          <span class="eyebrow">Povestea din spatele asociației</span>
-          <blockquote>
-            „Am fost copilul pe care nimeni nu paria. Am crescut fără casă, fără
-            cărți, fără lumină. Educația a fost singura poartă spre o altă viață
-            — și astăzi o deschid pentru alți copii ca mine."
-          </blockquote>
-          <p>
-            Lamiita Purcaru, fondatoarea asociației, s-a născut într-o familie
-            săracă, a crescut fără adăpost, cu o mamă alcoolică și un tată
-            închis. Până la 10 ani a fost analfabetă. A ajuns absolventă a
-            Facultății de Geografie din Universitatea din București, iar astăzi
-            este Director General al unei companii. Din experiența ei a luat
-            naștere Asociația „Educația Schimbă Destine".
-          </p>
-          <p class="founder-author">Lamiita Purcaru<small>Președinte &amp; Fondatoare</small></p>
-          <a href="/despre" class="btn btn-ghost btn-sm">Citește povestea completă →</a>
+          <span class="eyebrow"
+            data-db-table="founder_story" data-db-id={founder.id} data-db-field="eyebrow"
+          >{founder.eyebrow || 'Povestea din spatele asociației'}</span>
+          <blockquote
+            data-db-table="founder_story" data-db-id={founder.id} data-db-field="quote"
+          >„{founder.quote}"</blockquote>
+          <p
+            data-db-table="founder_story" data-db-id={founder.id} data-db-field="description"
+          >{founder.description}</p>
+          <p class="founder-author"
+            data-db-table="founder_story" data-db-id={founder.id} data-db-field="author_name"
+          >{founder.author_name}<small>{founder.author_title}</small></p>
+          <a href={founderSec.cta_primary_link || '/despre'} class="btn btn-ghost btn-sm"
+            data-db-table="page_sections" data-db-id={founderSec.id} data-db-field="cta_primary_text"
+          >{founderSec.cta_primary_text || 'Citește povestea completă →'}</a>
         </div>
       </div>
     </div>
   </section>
+  )}
 
+  <!-- ══ DONEAZĂ ════════════════════════════════════════════════════════════ -->
   <section style="background:var(--bg-alt)">
     <div class="container">
       <div class="section-head">
-        <span class="eyebrow">Donează</span>
-        <h2>Transformă o viață cu o donație.</h2>
-        <p>100% din donație merge direct către copii. Donație unică, lunară sau prin redirecționarea a 3,5% din impozit.</p>
+        <span class="eyebrow"
+          data-db-table="page_sections" data-db-id={donateSec.id} data-db-field="eyebrow"
+        >{donateSec.eyebrow || 'Donează'}</span>
+        <h2 data-db-table="page_sections" data-db-id={donateSec.id} data-db-field="heading"
+        >{donateSec.heading || 'Transformă o viață cu o donație.'}</h2>
+        <p data-db-table="page_sections" data-db-id={donateSec.id} data-db-field="subheading"
+        >{donateSec.subheading || '100% din donație merge direct către copii. Donație unică, lunară sau prin redirecționarea a 3,5% din impozit.'}</p>
       </div>
       <div style="text-align:center">
-        <a href="/doneaza" class="btn btn-primary">Donează acum</a>
-        <a href="/doneaza#redirect" class="btn btn-ghost" style="margin-left:8px">Redirect 3,5%</a>
+        <a href={donateSec.cta_primary_link || '/doneaza'} class="btn btn-primary"
+          data-db-table="page_sections" data-db-id={donateSec.id} data-db-field="cta_primary_text"
+        >{donateSec.cta_primary_text || 'Donează acum'}</a>
+        <a href={donateSec.cta_secondary_link || '/doneaza#redirect'} class="btn btn-ghost" style="margin-left:8px"
+          data-db-table="page_sections" data-db-id={donateSec.id} data-db-field="cta_secondary_text"
+        >{donateSec.cta_secondary_text || 'Redirect 3,5%'}</a>
       </div>
     </div>
   </section>
 
+  <!-- ══ TRANSPARENȚĂ ═══════════════════════════════════════════════════════ -->
   <section>
     <div class="container">
       <div class="transparency">
-        <span class="eyebrow">Transparență totală</span>
-        <h2>Știi exact unde ajung banii tăi.</h2>
-        <p>Publicăm rapoarte anuale, bilanț contabil și detalii despre fiecare proiect. Încrederea ta e baza muncii noastre.</p>
+        <span class="eyebrow"
+          data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="eyebrow"
+        >{transpSec.eyebrow || 'Transparență totală'}</span>
+        <h2 data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="heading"
+        >{transpSec.heading || 'Știi exact unde ajung banii tăi.'}</h2>
+        <p data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="subheading"
+        >{transpSec.subheading || 'Publicăm rapoarte anuale, bilanț contabil și detalii despre fiecare proiect. Încrederea ta e baza muncii noastre.'}</p>
         <div class="transparency-grid">
-          <div class="t-stat"><div class="num">87%</div><div class="label">direct către copii</div></div>
-          <div class="t-stat"><div class="num">9%</div><div class="label">logistică</div></div>
-          <div class="t-stat"><div class="num">4%</div><div class="label">administrativ</div></div>
-          <div class="t-stat"><div class="num">0%</div><div class="label">publicitate plătită</div></div>
+          <div class="t-stat">
+            <div class="num" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat1_num">{transpSec.stat1_num || '87%'}</div>
+            <div class="label" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat1_label">{transpSec.stat1_label || 'direct către copii'}</div>
+          </div>
+          <div class="t-stat">
+            <div class="num" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat2_num">{transpSec.stat2_num || '9%'}</div>
+            <div class="label" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat2_label">{transpSec.stat2_label || 'logistică'}</div>
+          </div>
+          <div class="t-stat">
+            <div class="num" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat3_num">{transpSec.stat3_num || '4%'}</div>
+            <div class="label" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat3_label">{transpSec.stat3_label || 'administrativ'}</div>
+          </div>
+          <div class="t-stat">
+            <div class="num" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat4_num">{transpSec.stat4_num || '0%'}</div>
+            <div class="label" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat4_label">{transpSec.stat4_label || 'publicitate plătită'}</div>
+          </div>
         </div>
-        <p style="opacity:.7;font-size:0.85rem">Procentele sunt ilustrative — înlocuiește cu cifre reale din bilanțul 2024.</p>
+        <p style="opacity:.7;font-size:0.85rem"
+          data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="note_text"
+        >{transpSec.note_text || 'Procentele sunt ilustrative — înlocuiește cu cifre reale din bilanțul 2024.'}</p>
       </div>
     </div>
   </section>
+
 </Layout>

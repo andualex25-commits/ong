@@ -1,114 +1,151 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+
+const [projectsRes, storiesRes, sectionsRes] = await Promise.all([
+  supabase.from('featured_projects').select('*').order('order_index'),
+  supabase.from('beneficiary_stories').select('*').order('order_index'),
+  supabase.from('page_sections').select('*').in('section_key', ['proiecte_head', 'proiecte_stories']),
+]);
+
+const projects = projectsRes.data || [];
+const stories  = storiesRes.data  || [];
+
+const sectionsArr = sectionsRes.data || [];
+const sec: Record<string, any> = {};
+for (const s of sectionsArr) sec[s.section_key] = s;
+
+const headSec    = sec['proiecte_head']    || {};
+const storiesSec = sec['proiecte_stories'] || {};
 ---
 
 <Layout
   title="Proiecte — Educația Schimbă Destine"
   description="Proiectele Asociației Educația Schimbă Destine: Hub Educațional Călătoria Cunoașterii, sprijin pentru Alexandra, ajutor pentru familia Dragomir."
 >
+  <!-- ══ PAGE HEADER ══════════════════════════════════════════════════════════ -->
   <section class="page-head">
     <div class="container">
-      <span class="eyebrow">Proiecte</span>
-      <h1>Acționăm direct. Acolo unde nevoia e cea mai mare.</h1>
-      <p>Fiecare proiect are un nume, un chip și un buget transparent.</p>
+      <span class="eyebrow"
+        data-db-table="page_sections" data-db-id={headSec.id} data-db-field="eyebrow"
+      >{headSec.eyebrow || 'Proiecte'}</span>
+      <h1
+        data-db-table="page_sections" data-db-id={headSec.id} data-db-field="heading"
+      >{headSec.heading || 'Acționăm direct. Acolo unde nevoia e cea mai mare.'}</h1>
+      <p
+        data-db-table="page_sections" data-db-id={headSec.id} data-db-field="subheading"
+      >{headSec.subheading || 'Fiecare proiect are un nume, un chip și un buget transparent.'}</p>
     </div>
   </section>
 
-  <section>
-    <div class="container">
-      <div class="project">
-        <div>
-          <span class="eyebrow">Proiect pilot · În desfășurare</span>
-          <h2>Hub Educațional „Călătoria Cunoașterii"</h2>
-          <p>
-            Începând din noiembrie 2024, la Școala Gimnazială „Spiru Haret",
-            Braniștea, județul Dâmbovița, a fost deschis Hubul educațional
-            „Călătoria Cunoașterii" — dedicat copiilor vulnerabili din clasele
-            pregătitoare și primare.
-          </p>
-          <p>
-            Este mai mult decât un loc de joacă: un mediu sigur și plin de
-            oportunități unde copiii descoperă, explorează, învață lucruri noi.
-            Prin activități interactive, sunt îndrumați cu grijă și încurajați
-            să-și descopere talentele și să-și dezvolte încrederea în propriile
-            forțe.
-          </p>
-          <div class="project-meta">
-            <div><strong>Braniștea, Dâmbovița</strong><span style="opacity:.7">locație</span></div>
-            <div><strong>Clasele 0–IV</strong><span style="opacity:.7">beneficiari</span></div>
-            <div><strong>Nov 2024 →</strong><span style="opacity:.7">deschis</span></div>
+  <!-- ══ PROIECTE ═══════════════════════════════════════════════════════════ -->
+  <div data-db-section-add="featured_projects">
+    {projects.map((project) => (
+    <section>
+      <div class="container">
+        <div class="project featured-project-card">
+          <div>
+            {project.eyebrow && (
+              <span class="eyebrow"
+                data-db-table="featured_projects" data-db-id={project.id} data-db-field="eyebrow"
+              >{project.eyebrow}</span>
+            )}
+            <h2 data-db-table="featured_projects" data-db-id={project.id} data-db-field="title">{project.title}</h2>
+            {project.description && (
+              <p data-db-table="featured_projects" data-db-id={project.id} data-db-field="description">{project.description}</p>
+            )}
+            <div class="project-meta">
+              {project.location && (
+                <div>
+                  <strong data-db-table="featured_projects" data-db-id={project.id} data-db-field="location">{project.location}</strong>
+                  <span style="opacity:.7">locație</span>
+                </div>
+              )}
+              {project.target_age && (
+                <div>
+                  <strong data-db-table="featured_projects" data-db-id={project.id} data-db-field="target_age">{project.target_age}</strong>
+                  <span style="opacity:.7">beneficiari</span>
+                </div>
+              )}
+              {project.status && (
+                <div>
+                  <strong data-db-table="featured_projects" data-db-id={project.id} data-db-field="status">{project.status}</strong>
+                  <span style="opacity:.7">deschis</span>
+                </div>
+              )}
+            </div>
+            <div class="hero-cta">
+              {project.cta_primary_text && (
+                <a href={project.cta_primary_link || '/doneaza'} class="btn btn-primary"
+                  data-db-table="featured_projects" data-db-id={project.id} data-db-field="cta_primary_text"
+                >{project.cta_primary_text}</a>
+              )}
+              {project.cta_secondary_text && (
+                <a href={project.cta_secondary_link || '/despre'} class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,0.4)"
+                  data-db-table="featured_projects" data-db-id={project.id} data-db-field="cta_secondary_text"
+                >{project.cta_secondary_text}</a>
+              )}
+            </div>
           </div>
-          <div class="hero-cta">
-            <a href="/doneaza" class="btn btn-primary">Susține hubul</a>
+          <div class="project-image"
+            data-db-table="featured_projects" data-db-id={project.id} data-db-field="image_url"
+          >
+            {project.image_url
+              ? <img src={project.image_url} alt={project.title} style="width:100%;height:100%;object-fit:cover;" />
+              : <div class="ph">Foto: {project.title}</div>
+            }
           </div>
         </div>
-        <div class="project-image"><div class="ph">Foto: copii la hub (înlocuiește)</div></div>
       </div>
-    </div>
-  </section>
+    </section>
+    ))}
+  </div>
 
+  <!-- ══ POVEȘTI ════════════════════════════════════════════════════════════ -->
+  {stories.length > 0 && (
   <section>
     <div class="container">
       <div class="section-head">
-        <span class="eyebrow">Sprijin individual</span>
-        <h2>Poveștile beneficiarilor</h2>
-        <p>Solidaritate în familii — alături de cei care au nevoie de sprijin și iubire.</p>
+        <span class="eyebrow"
+          data-db-table="page_sections" data-db-id={storiesSec.id} data-db-field="eyebrow"
+        >{storiesSec.eyebrow || 'Sprijin individual'}</span>
+        <h2
+          data-db-table="page_sections" data-db-id={storiesSec.id} data-db-field="heading"
+        >{storiesSec.heading || 'Poveștile beneficiarilor'}</h2>
+        <p
+          data-db-table="page_sections" data-db-id={storiesSec.id} data-db-field="subheading"
+        >{storiesSec.subheading || 'Solidaritate în familii — alături de cei care au nevoie de sprijin și iubire.'}</p>
       </div>
 
-      <div class="stories">
-        <article class="story">
-          <div class="story-image a"><div class="ph">Alexandra Marghioala</div></div>
-          <div class="story-body">
-            <span class="story-tag">Studentă psihologie · 20 ani</span>
-            <h3>Povestea Alexandrei Marghioala</h3>
-            <p>
-              Nu vede deloc, este imobilizată de la naștere într-un scaun cu
-              rotile și are Maladia Lobstein (boala oaselor de sticlă). A
-              terminat liceul cu note mari și s-a înscris la Facultatea de
-              Psihologie la Pitești, hotărâtă să ajute oameni. Tatăl ei o duce
-              zilnic la cursuri — 110 km dus-întors — și o ajută cu pregătirea
-              examenelor.
-            </p>
-            <div class="story-needs">
-              <strong>Cum o putem ajuta:</strong>
-              <ul>
-                <li>Mașină adaptată pentru transport</li>
-                <li>Scaun cu rotile nou</li>
-                <li>Imprimantă pentru proiectele de la facultate</li>
-                <li>Produse de igienă (pampers, șervețele umede)</li>
-              </ul>
+      <div class="stories" data-db-section-add="beneficiary_stories">
+        {stories.map((story, i) => (
+          <article class="story">
+            <div class={`story-image ${String.fromCharCode(97 + (i % 26))}`}
+              data-db-table="beneficiary_stories" data-db-id={story.id} data-db-field="image_url"
+            >
+              {story.image_url
+                ? <img src={story.image_url} alt={story.title} style="width:100%;height:100%;object-fit:cover;" />
+                : <div class="ph">{story.title}</div>
+              }
             </div>
-            <a href="/doneaza" class="btn btn-dark btn-sm">Susține pe Alexandra</a>
-          </div>
-        </article>
-
-        <article class="story">
-          <div class="story-image b"><div class="ph">Familia Dragomir</div></div>
-          <div class="story-body">
-            <span class="story-tag">Urgent · 6 copii</span>
-            <h3>Familia Dragomir din Cuparu</h3>
-            <p>
-              Locuiesc de 13 ani într-un bloc abandonat fost IAS în satul
-              Cuparu, județul Dâmbovița. Urmează să fie evacuați — imobilul a
-              devenit proprietate privată. Cel mai mic, de 9 luni, s-a născut
-              cu hidrocefalie și a trecut prin intervenții chirurgicale.
-              Părinții muncesc cu ziua pentru ca cei 6 copii să nu abandoneze
-              școala.
-            </p>
-            <div class="story-needs">
-              <strong>Cum îi putem ajuta:</strong>
-              <ul>
-                <li>Rechizite pentru cei 6 copii, haine</li>
-                <li>Decontarea transportului la școală</li>
-                <li>Produse de igienă, lapte praf, pampers</li>
-                <li>Alimente, lemne pentru sobă</li>
-                <li>Sprijin pentru adăpost</li>
-              </ul>
+            <div class="story-body">
+              {story.tag && (
+                <span class="story-tag"
+                  data-db-table="beneficiary_stories" data-db-id={story.id} data-db-field="tag"
+                >{story.tag}</span>
+              )}
+              <h3 data-db-table="beneficiary_stories" data-db-id={story.id} data-db-field="title">{story.title}</h3>
+              {story.description && (
+                <p data-db-table="beneficiary_stories" data-db-id={story.id} data-db-field="description">{story.description}</p>
+              )}
+              <a href={storiesSec.cta_primary_link || '/doneaza'} class="btn btn-dark btn-sm"
+                data-db-table="page_sections" data-db-id={storiesSec.id} data-db-field="cta_primary_text"
+              >{storiesSec.cta_primary_text || 'Susține'}</a>
             </div>
-            <a href="/doneaza" class="btn btn-dark btn-sm">Ajută familia</a>
-          </div>
-        </article>
+          </article>
+        ))}
       </div>
     </div>
   </section>
+  )}
 </Layout>

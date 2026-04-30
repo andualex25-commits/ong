@@ -169,7 +169,7 @@ section.tight { padding: 64px 0; }
 .project-image {
   aspect-ratio: 4/3;
   background: linear-gradient(135deg, #e07a3c 0%, #f4b584 100%);
-  border-radius: var(--radius); position: relative;
+  border-radius: var(--radius); position: relative; overflow: hidden;
 }
 .project-image .ph {
   position: absolute; inset: 0; display: grid; place-items: center;
@@ -199,7 +199,7 @@ section.tight { padding: 64px 0; }
 /* Beneficiary stories */
 .stories { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
 .story { background: #fff; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; }
-.story-image { aspect-ratio: 16/10; position: relative; }
+.story-image { aspect-ratio: 16/10; position: relative; overflow: hidden; }
 .story-image.a { background: linear-gradient(135deg, #c9a87c 0%, #6b7a4e 100%); }
 .story-image.b { background: linear-gradient(135deg, #a2684a 0%, #3e4e3a 100%); }
 .story-image .ph { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,0.9); font-size: 0.85rem; }

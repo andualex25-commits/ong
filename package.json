@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@astrojs/netlify": "^6.0.0",
+    "@supabase/supabase-js": "^2.41.0",
     "astro": "^5.0.0",
     "decap-cms-app": "^3.0.0",
     "stripe": "^17.0.0"

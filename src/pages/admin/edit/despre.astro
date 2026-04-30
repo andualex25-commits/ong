@@ -1,0 +1,245 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<script src="/admin-uploader.js" is:inline></script>
+<Layout title="Edit Despre — Admin" description="Edit despre page content">
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }
+    #root { display: flex; flex-direction: column; height: 100vh; }
+    #topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; height: 52px; background: #1a1a2e; color: white;
+      flex-shrink: 0; gap: 16px; z-index: 10;
+    }
+    #topbar a, #topbar button {
+      color: white; text-decoration: none; font-size: 13px;
+      padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1); cursor: pointer; font-weight: 500;
+      transition: background 0.15s;
+    }
+    #topbar a:hover, #topbar button:hover { background: rgba(255,255,255,0.2); }
+    #topbar .title { flex: 1; font-size: 14px; font-weight: 600; letter-spacing: 0.3px; }
+    #frameWrap { flex: 1; position: relative; overflow: hidden; }
+    #siteFrame { width: 100%; height: 100%; border: none; display: block; }
+    #loader {
+      position: absolute; inset: 0; background: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; color: #999; z-index: 5;
+    }
+    .modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65); z-index: 2000;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-bg.open { display: flex; }
+    .modal-box {
+      background: white; border-radius: 14px; padding: 32px;
+      max-width: 560px; width: 100%; box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+      animation: pop 0.18s ease;
+    }
+    @keyframes pop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-box h2 { margin: 0 0 20px; font-size: 18px; }
+    .modal-close { float: right; background: none; border: none; font-size: 22px; cursor: pointer; color: #aaa; line-height: 1; margin-top: -4px; }
+    .modal-close:hover { color: #333; }
+    .current-val {
+      padding: 12px 16px; background: #f6f7ff; border-left: 4px solid var(--primary);
+      border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #555;
+      white-space: pre-wrap; word-break: break-word; max-height: 80px; overflow: hidden;
+    }
+    .modal-box label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 8px; color: #444; }
+    .modal-box textarea {
+      width: 100%; padding: 12px; border: 2px solid var(--primary);
+      border-radius: 8px; box-sizing: border-box; min-height: 110px;
+      font-family: inherit; font-size: 14px; resize: vertical; line-height: 1.5;
+    }
+    .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+    .btn-cancel { padding: 12px; background: #f0f0f0; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    .btn-save { padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    .msg { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-top: 12px; display: none; }
+  </style>
+
+  <div id="root">
+    <div id="topbar">
+      <a href="/admin/dashboard">← Dashboard</a>
+      <span class="title">✏️ Editează Despre — apasă pe orice text albastru</span>
+      <a href="/despre" target="_blank">Vizualizează live ↗</a>
+    </div>
+    <div id="frameWrap">
+      <div id="loader">Se încarcă previzualizarea...</div>
+      <iframe id="siteFrame" src="/despre"></iframe>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal-bg">
+    <div class="modal-box">
+      <button class="modal-close" id="editClose">✕</button>
+      <h2 id="editTitle">Editează</h2>
+      <div class="current-val" id="editCurrent"></div>
+      <label id="editLabel">Valoare nouă</label>
+      <textarea id="editField"></textarea>
+      <div class="msg" id="editMsg"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="editCancel">Anulează</button>
+        <button class="btn-save" id="editSave">Salvează ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const authToken = localStorage.getItem('supabase.auth.token');
+    if (!authToken) window.location.href = '/admin/login';
+
+    const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL;
+    const SUPABASE_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+    function getToken() { return JSON.parse(authToken).access_token; }
+
+    async function dbPatch(table, id, body) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok && r.status !== 204) { const e = await r.json(); throw new Error(e.message || `HTTP ${r.status}`); }
+    }
+
+    const frame = document.getElementById('siteFrame');
+    const loader = document.getElementById('loader');
+    let editState = { table: null, id: null, field: null };
+
+    frame.addEventListener('load', () => {
+      const doc = frame.contentDocument;
+      if (!doc || doc.body === null) return;
+      loader.style.display = 'none';
+
+      doc.addEventListener('click', (e) => {
+        const a = e.target.closest('a');
+        if (a && !a.hasAttribute('data-db-table')) e.preventDefault();
+      }, true);
+
+      injectAdminStyles(doc);
+      injectAdminBar(doc);
+      injectEditHandlers(doc);
+    });
+
+    function injectAdminStyles(doc) {
+      const s = doc.createElement('style');
+      s.textContent = `
+        [data-db-table]:not([data-db-field="image_url"]) {
+          cursor: pointer !important;
+          outline: 2px dashed transparent;
+          outline-offset: 3px;
+          transition: outline-color 0.12s, background 0.12s;
+          border-radius: 3px;
+        }
+        [data-db-table]:not([data-db-field="image_url"]):hover {
+          outline-color: #3366ff !important;
+          background: rgba(51,102,255,0.07) !important;
+        }
+        [data-db-field="image_url"] {
+          cursor: pointer !important;
+          position: relative;
+          transition: filter 0.15s;
+        }
+        [data-db-field="image_url"]::after {
+          content: "📷  Clică pentru fotografie";
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(51,102,255,0.75);
+          color: white; font-size: 14px; font-weight: 600;
+          border-radius: 8px; opacity: 0;
+          transition: opacity 0.15s;
+          pointer-events: none;
+          text-align: center; padding: 12px;
+        }
+        [data-db-field="image_url"]:hover::after { opacity: 1; }
+        .admin-bar {
+          position: sticky; top: 0; z-index: 9999;
+          background: #1a1a2e; color: white;
+          text-align: center; padding: 9px 16px;
+          font-size: 12px; font-weight: 500; letter-spacing: 0.3px;
+        }
+        .admin-bar span { opacity: 0.7; }
+      `;
+      doc.head.appendChild(s);
+    }
+
+    function injectAdminBar(doc) {
+      const bar = doc.createElement('div');
+      bar.className = 'admin-bar';
+      bar.innerHTML = '✏️ MOD EDITARE &nbsp;·&nbsp; <span>apasă pe orice text subliniat cu albastru pentru a-l edita</span>';
+      doc.body.prepend(bar);
+    }
+
+    function injectEditHandlers(doc) {
+      doc.querySelectorAll('[data-db-table]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const { dbTable, dbId, dbField } = el.dataset;
+
+          if (dbField === 'image_url') {
+            const currentUrl = el.querySelector('img')?.src || '';
+            AdminUploader.open({
+              supabaseUrl: SUPABASE_URL,
+              supabaseKey: SUPABASE_KEY,
+              getToken,
+              currentUrl,
+              title: 'Fotografie fondatoare',
+              onSave: async (url) => {
+                await dbPatch(dbTable, dbId, { image_url: url });
+                reloadFrame();
+              },
+            });
+          } else {
+            openEditModal(dbTable, dbId, dbField, el.textContent.trim());
+          }
+        });
+      });
+    }
+
+    function openEditModal(table, id, field, currentVal) {
+      editState = { table, id, field };
+      document.getElementById('editTitle').textContent = `Editează: ${field}`;
+      document.getElementById('editCurrent').textContent = currentVal || '(gol)';
+      document.getElementById('editField').value = currentVal || '';
+      showMsg('editMsg', '', '');
+      document.getElementById('editModal').classList.add('open');
+      setTimeout(() => document.getElementById('editField').focus(), 80);
+    }
+
+    function closeEditModal() { document.getElementById('editModal').classList.remove('open'); }
+
+    document.getElementById('editClose').onclick = closeEditModal;
+    document.getElementById('editCancel').onclick = closeEditModal;
+    document.getElementById('editModal').onclick = (e) => { if (e.target === document.getElementById('editModal')) closeEditModal(); };
+
+    document.getElementById('editSave').onclick = async () => {
+      const { table, id, field } = editState;
+      const val = document.getElementById('editField').value;
+      showMsg('editMsg', 'Se salvează...', 'info');
+      try {
+        await dbPatch(table, id, { [field]: val });
+        showMsg('editMsg', '✓ Salvat! Se reîncarcă previzualizarea...', 'ok');
+        setTimeout(() => { closeEditModal(); reloadFrame(); }, 900);
+      } catch(e) {
+        showMsg('editMsg', 'Eroare: ' + e.message, 'err');
+      }
+    };
+
+    function reloadFrame() {
+      loader.style.display = 'flex';
+      frame.src = '/despre';
+    }
+
+    function showMsg(id, text, type) {
+      const el = document.getElementById(id);
+      if (!text) { el.style.display = 'none'; return; }
+      el.style.display = 'block';
+      el.style.background = type === 'ok' ? '#edfaed' : type === 'err' ? '#fdecea' : '#eef0ff';
+      el.style.color = type === 'ok' ? '#276' : type === 'err' ? '#b33' : '#335';
+      el.textContent = text;
+    }
+  </script>
+</Layout>

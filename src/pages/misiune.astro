@@ -1,5 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+
+const [cardsRes, sectionsRes] = await Promise.all([
+  supabase.from('mission_cards').select('*').order('order_index'),
+  supabase.from('page_sections').select('*').in('section_key', ['misiune_head', 'misiune_involve']),
+]);
+
+const missionCards = cardsRes.data || [];
+const sectionsArr = sectionsRes.data || [];
+const sec: Record<string, any> = {};
+for (const s of sectionsArr) sec[s.section_key] = s;
+
+const headSec    = sec['misiune_head']    || {};
+const involveSec = sec['misiune_involve'] || {};
 ---
 
 <Layout
@@ -8,53 +22,30 @@ import Layout from '../layouts/Layout.astro';
 >
   <section class="page-head">
     <div class="container">
-      <span class="eyebrow">Misiunea noastră</span>
-      <h1>Șase direcții. Un singur obiectiv: copilul.</h1>
-      <p>Ce facem, cum facem și de ce contează fiecare gest de sprijin.</p>
+      <span class="eyebrow"
+        data-db-table="page_sections" data-db-id={headSec.id} data-db-field="eyebrow"
+      >{headSec.eyebrow || 'Misiunea noastră'}</span>
+      <h1
+        data-db-table="page_sections" data-db-id={headSec.id} data-db-field="heading"
+      >{headSec.heading || 'Șase direcții. Un singur obiectiv: copilul.'}</h1>
+      <p
+        data-db-table="page_sections" data-db-id={headSec.id} data-db-field="subheading"
+      >{headSec.subheading || 'Ce facem, cum facem și de ce contează fiecare gest de sprijin.'}</p>
     </div>
   </section>
 
   <section>
     <div class="container">
-      <div class="mission-grid">
-        <div class="mission-card">
-          <div class="mission-num">01</div>
-          <h3>Misiunea noastră</h3>
-          <p>Construim un viitor strălucitor pentru copiii care se confruntă cu lipsuri și dificultăți. Oferim nu doar asistență materială, ci și sprijin emoțional, educativ și social — contribuim la dezvoltarea personală a fiecărui copil.</p>
-        </div>
-        <div class="mission-card">
-          <div class="mission-num">02</div>
-          <h3>Suntem hotărâți</h3>
-          <p>Creăm un mediu în care fiecare copil se simte iubit, protejat și încurajat să-și urmeze visele. În colaborare cu comunitățile locale, dezvoltăm programe personalizate care abordează nevoile specifice ale copiilor și familiilor lor.</p>
-        </div>
-        <div class="mission-card">
-          <div class="mission-num">03</div>
-          <h3>Cum ajutăm</h3>
-          <p>
-            <strong>Asistență materială:</strong> alimente, haine, resurse esențiale.<br>
-            <strong>Educație:</strong> burse școlare, materiale didactice, programe de dezvoltare.<br>
-            <strong>Dezvoltare comunitară:</strong> medii sigure și sănătoase pentru copii.
-          </p>
-        </div>
-        <div class="mission-card">
-          <div class="mission-num">04</div>
-          <h3>Fiecare gest contează</h3>
-          <p>
-            <strong>Donații unice sau lunare</strong> pentru programele noastre.<br>
-            <strong>Voluntariat</strong> — implică-te activ în proiecte.<br>
-            <strong>Împărtășire</strong> — spune mai departe povestea copiilor noștri.
-          </p>
-        </div>
-        <div class="mission-card">
-          <div class="mission-num">05</div>
-          <h3>Copilărie fericită</h3>
-          <p>Credem că fiecare copil are dreptul la o copilărie fericită și la o șansă echitabilă în viață. Alătură-te nouă în construirea unui viitor mai bun pentru copiii în dificultate.</p>
-        </div>
-        <div class="mission-card">
-          <div class="mission-num">06</div>
-          <h3>Alătură-te nouă</h3>
-          <p>O schimbare începe cu oricine. Donează pentru micuții noștri care vor deveni oameni mari.</p>
-        </div>
+      <div class="mission-grid" data-db-section-add="mission_cards">
+        {missionCards.map((card) => (
+          <div class="mission-card">
+            <div class="mission-num"
+              data-db-table="mission_cards" data-db-id={card.id} data-db-field="number"
+            >{String(card.number).padStart(2, '0')}</div>
+            <h3 data-db-table="mission_cards" data-db-id={card.id} data-db-field="title">{card.title}</h3>
+            <p data-db-table="mission_cards" data-db-id={card.id} data-db-field="description">{card.description}</p>
+          </div>
+        ))}
       </div>
     </div>
   </section>
@@ -62,8 +53,12 @@ import Layout from '../layouts/Layout.astro';
   <section style="background:var(--bg-alt)">
     <div class="container">
       <div class="section-head">
-        <span class="eyebrow">Implică-te</span>
-        <h2>Nu e nevoie doar de bani. E nevoie de tine.</h2>
+        <span class="eyebrow"
+          data-db-table="page_sections" data-db-id={involveSec.id} data-db-field="eyebrow"
+        >{involveSec.eyebrow || 'Implică-te'}</span>
+        <h2
+          data-db-table="page_sections" data-db-id={involveSec.id} data-db-field="heading"
+        >{involveSec.heading || 'Nu e nevoie doar de bani. E nevoie de tine.'}</h2>
       </div>
       <div class="involve-grid">
         <div class="involve">

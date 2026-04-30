@@ -1,0 +1,84 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<Layout title="Edit Despre — Admin" description="Edit about page content">
+  <div style="min-height:100vh;background:var(--bg-alt);">
+    <div style="padding:16px 24px;background:white;border-bottom:1px solid #eee;">
+      <a href="/admin/dashboard" style="color:var(--primary);text-decoration:none;font-size:14px;">← Dashboard</a>
+      <h1 style="margin:8px 0 0;font-size:18px;">Pagina Despre — povestea completă</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#999;">Editează textul lung al poveștii. Folosește linii goale pentru paragrafe noi.</p>
+    </div>
+
+    <div class="container" style="padding:32px 0;max-width:720px;">
+      <div id="form" style="background:white;border-radius:8px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <p style="color:#999;text-align:center;">Se încarcă...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const authToken = localStorage.getItem('supabase.auth.token');
+    if (!authToken) window.location.href = '/admin/login';
+
+    const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL;
+    const SUPABASE_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+    function getToken() { return JSON.parse(authToken).access_token; }
+
+    async function api(method, path, body) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        method,
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (res.status === 204) return { success: true };
+      return res.json();
+    }
+
+    let founderId = null;
+
+    async function load() {
+      const data = await api('GET', 'founder_story?limit=1');
+      const f = data[0] || {};
+      founderId = f.id || null;
+
+      document.getElementById('form').innerHTML = `
+        <h2 style="margin:0 0 8px;font-size:18px;">Povestea completă</h2>
+        <p style="margin:0 0 24px;color:#999;font-size:14px;">Acest text apare pe pagina /despre în secțiunea biografie.</p>
+
+        <div style="margin-bottom:20px;">
+          <label style="display:block;margin-bottom:6px;font-weight:600;font-size:14px;">Titlu pagina Despre <span style="font-weight:400;color:#999;">(H1)</span></label>
+          <input id="pageTitle" type="text" value="${(f.author_name ? 'Povestea mea. Misiunea noastră.' : '').replace(/"/g,'&quot;')}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;font-size:14px;" placeholder="Povestea mea. Misiunea noastră." />
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <label style="display:block;margin-bottom:6px;font-weight:600;font-size:14px;">Textul poveștii complete</label>
+          <p style="font-size:12px;color:#999;margin:0 0 8px;">Linii goale = paragrafe noi. Textul apare direct pe pagina /despre.</p>
+          <textarea id="storyText" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;min-height:400px;font-family:inherit;font-size:14px;resize:vertical;line-height:1.6;">${f.description || ''}</textarea>
+        </div>
+
+        <div id="saveMsg" style="padding:12px;border-radius:6px;display:none;font-size:14px;margin-bottom:16px;"></div>
+        <button id="saveBtn" style="width:100%;padding:14px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:15px;">Salvează ✓</button>
+        <a href="/despre" target="_blank" style="display:block;text-align:center;margin-top:12px;color:var(--primary);font-size:14px;">Vizualizează pagina /despre →</a>
+      `;
+
+      document.getElementById('saveBtn').onclick = async () => {
+        const msg = document.getElementById('saveMsg');
+        msg.style.display = 'block'; msg.style.background = '#eef'; msg.style.color = '#33c'; msg.textContent = 'Se salvează...';
+        try {
+          const body = { description: document.getElementById('storyText').value };
+          if (founderId) {
+            await api('PATCH', `founder_story?id=eq.${founderId}`, body);
+          } else {
+            await api('POST', 'founder_story', body);
+          }
+          msg.style.background = '#efe'; msg.style.color = '#3c3'; msg.textContent = '✓ Salvat! Pagina /despre a fost actualizată.';
+        } catch(e) {
+          msg.style.background = '#fee'; msg.style.color = '#c33'; msg.textContent = 'Eroare: ' + e.message;
+        }
+      };
+    }
+
+    load();
+  </script>
+</Layout>
