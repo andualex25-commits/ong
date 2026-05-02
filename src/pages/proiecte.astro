@@ -189,9 +189,11 @@ if (projectIds.length > 0) {
               {story.description && (
                 <p data-db-table="beneficiary_stories" data-db-id={story.id} data-db-field="description">{story.description}</p>
               )}
-              <a href={storiesSec.cta_primary_link || '/doneaza'} class="btn btn-dark btn-sm"
-                data-db-table="page_sections" data-db-id={storiesSec.id} data-db-field="cta_primary_text"
-              >{storiesSec.cta_primary_text || 'Susține'}</a>
+              {storiesSec.cta_primary_text && (
+                <a href={storiesSec.cta_primary_link || '/doneaza'} class="btn btn-dark btn-sm"
+                  data-db-table="page_sections" data-db-id={storiesSec.id} data-db-field="cta_primary_text"
+                >{storiesSec.cta_primary_text}</a>
+              )}
             </div>
           </article>
         ))}
