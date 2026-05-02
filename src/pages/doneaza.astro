@@ -100,10 +100,10 @@ const defaults: Record<string,string> = {
             data-db-table="page_sections" data-db-id={side.id} data-db-field="heading"
           >{side.heading || 'De ce donezi?'}</h3>
           <ul>
-            <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat1_label">{side.stat1_label || '100% din donație merge direct către copii.'}</li>
-            <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat2_label">{side.stat2_label || 'Primești chitanță pe email pentru deducerea fiscală.'}</li>
-            <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat3_label">{side.stat3_label || 'Donație lunară = sprijin predictibil pentru burse și hub.'}</li>
-            <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat4_label">{side.stat4_label || 'Te poți opri oricând, din contul tău Stripe.'}</li>
+            {(side.stat1_label ?? '100% din donație merge direct către copii.').trim() && <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat1_label">{side.stat1_label || '100% din donație merge direct către copii.'}</li>}
+            {(side.stat2_label ?? 'Primești chitanță pe email pentru deducerea fiscală.').trim() && <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat2_label">{side.stat2_label || 'Primești chitanță pe email pentru deducerea fiscală.'}</li>}
+            {(side.stat3_label ?? 'Donație lunară = sprijin predictibil pentru burse și hub.').trim() && <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat3_label">{side.stat3_label || 'Donație lunară = sprijin predictibil pentru burse și hub.'}</li>}
+            {(side.stat4_label ?? 'Te poți opri oricând, din contul tău Stripe.').trim() && <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat4_label">{side.stat4_label || 'Te poți opri oricând, din contul tău Stripe.'}</li>}
           </ul>
 
           <h3 style="margin-top:32px" id="redirect"
