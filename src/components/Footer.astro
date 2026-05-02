@@ -1,5 +1,10 @@
 ---
+import { supabase } from '../lib/supabase';
 const year = new Date().getFullYear();
+
+const { data: contactRows } = await supabase.from('contact_info').select('key,value');
+const ci: Record<string,string> = {};
+for (const row of contactRows || []) ci[row.key] = row.value || '';
 ---
 
 <footer class="site">
@@ -15,9 +20,9 @@ const year = new Date().getFullYear();
         </div>
         <p>Sprijinim copiii din medii vulnerabile prin educație, materiale și comunitate.</p>
         <div class="social" aria-label="Urmărește-ne">
-          <a href="https://facebook.com" aria-label="Facebook">f</a>
-          <a href="https://instagram.com" aria-label="Instagram">◎</a>
-          <a href="mailto:educatiaschimbadestine@gmail.com" aria-label="Email">@</a>
+          <a href={ci.facebook || 'https://facebook.com'} aria-label="Facebook" target="_blank" rel="noopener">f</a>
+          <a href={ci.instagram || 'https://instagram.com'} aria-label="Instagram" target="_blank" rel="noopener">◎</a>
+          <a href={`mailto:${ci.email || 'educatiaschimbadestine@gmail.com'}`} aria-label="Email">@</a>
         </div>
       </div>
       <div>
@@ -45,11 +50,11 @@ const year = new Date().getFullYear();
         <h4>Date juridice</h4>
         <ul>
           <li><strong style="color:#fff">Asociația Educația Schimbă Destine</strong></li>
-          <li>CIF: 49395736</li>
-          <li>București, România</li>
-          <li>0721 314 855</li>
-          <li><a href="mailto:educatiaschimbadestine@gmail.com">educatiaschimbadestine@gmail.com</a></li>
-          <li style="font-family:monospace;font-size:0.8rem;margin-top:10px">RO30 RZBR 0000 0600 2578 2550</li>
+          <li>CIF: {ci.cif || '49395736'}</li>
+          <li>{ci.adresa || 'București, România'}</li>
+          <li>{ci.telefon || '0721 314 855'}</li>
+          <li><a href={`mailto:${ci.email || 'educatiaschimbadestine@gmail.com'}`}>{ci.email || 'educatiaschimbadestine@gmail.com'}</a></li>
+          <li style="font-family:monospace;font-size:0.8rem;margin-top:10px">{ci.iban || 'RO30 RZBR 0000 0600 2578 2550'}</li>
         </ul>
       </div>
     </div>
