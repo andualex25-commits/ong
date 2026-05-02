@@ -70,6 +70,11 @@ import Layout from '../../../layouts/Layout.astro';
     .add-field { margin-bottom: 16px; }
     .add-field label { font-weight: 600; font-size: 13px; color: #444; }
     .add-field small { display: block; color: #999; font-size: 12px; margin-top: 2px; }
+    .add-field input, .add-field textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 7px;
+      box-sizing: border-box; font-family: inherit; font-size: 14px; margin-top: 6px;
+    }
+    .add-field input:focus, .add-field textarea:focus { border-color: var(--primary); outline: none; }
   </style>
 
   <div id="root">
@@ -81,6 +86,28 @@ import Layout from '../../../layouts/Layout.astro';
     <div id="frameWrap">
       <div id="loader">Se încarcă previzualizarea...</div>
       <iframe id="siteFrame" src="/proiecte"></iframe>
+    </div>
+  </div>
+
+  <!-- Button Modal (text + link) -->
+  <div id="btnModal" class="modal-bg">
+    <div class="modal-box" style="max-width:480px;">
+      <button class="modal-close" id="btnClose">✕</button>
+      <h2>Editează buton</h2>
+      <div class="add-field">
+        <label for="btnText">Text buton *</label>
+        <input id="btnText" type="text" placeholder="ex: Donează acum" />
+      </div>
+      <div class="add-field" style="margin-top:14px;">
+        <label for="btnLink">Link (URL)</label>
+        <small>ex: /doneaza sau https://...</small>
+        <input id="btnLink" type="text" placeholder="/doneaza" />
+      </div>
+      <div class="msg" id="btnMsg"></div>
+      <div class="modal-actions" style="margin-top:20px;">
+        <button class="btn-cancel" id="btnCancel">Anulează</button>
+        <button class="btn-save" id="btnSave">Salvează ✓</button>
+      </div>
     </div>
   </div>
 
@@ -321,6 +348,10 @@ import Layout from '../../../layouts/Layout.astro';
                 reloadFrame();
               },
             });
+          } else if (dbField.endsWith('_text')) {
+            const linkField = dbField.replace('_text', '_link');
+            const currentLink = el.getAttribute('href') || '';
+            openBtnModal(dbTable, dbId, dbField, linkField, el.textContent.trim(), currentLink);
           } else {
             openEditModal(dbTable, dbId, dbField, el.textContent.trim());
           }
@@ -467,6 +498,39 @@ import Layout from '../../../layouts/Layout.astro';
         card.appendChild(btn);
       });
     }
+
+    // ── Button Modal (text + link) ──────────────────────────────────────────
+    let btnState = { table: null, id: null, textField: null, linkField: null };
+
+    function openBtnModal(table, id, textField, linkField, currentText, currentLink) {
+      btnState = { table, id, textField, linkField };
+      document.getElementById('btnText').value = currentText || '';
+      document.getElementById('btnLink').value = currentLink || '';
+      showMsg('btnMsg', '', '');
+      document.getElementById('btnModal').classList.add('open');
+      setTimeout(() => document.getElementById('btnText').focus(), 80);
+    }
+
+    function closeBtnModal() { document.getElementById('btnModal').classList.remove('open'); }
+
+    document.getElementById('btnClose').onclick = closeBtnModal;
+    document.getElementById('btnCancel').onclick = closeBtnModal;
+    document.getElementById('btnModal').onclick = (e) => { if (e.target === document.getElementById('btnModal')) closeBtnModal(); };
+
+    document.getElementById('btnSave').onclick = async () => {
+      const { table, id, textField, linkField } = btnState;
+      const text = document.getElementById('btnText').value.trim();
+      const link = document.getElementById('btnLink').value.trim();
+      if (!text) { showMsg('btnMsg', 'Textul butonului nu poate fi gol.', 'err'); return; }
+      showMsg('btnMsg', 'Se salvează...', 'info');
+      try {
+        await dbPatch(table, id, { [textField]: text, [linkField]: link || null });
+        showMsg('btnMsg', '✓ Salvat! Se reîncarcă...', 'ok');
+        setTimeout(() => { closeBtnModal(); reloadFrame(); }, 900);
+      } catch(e) {
+        showMsg('btnMsg', 'Eroare: ' + e.message, 'err');
+      }
+    };
 
     // ── Edit Modal ──────────────────────────────────────────────────────────
     function openEditModal(table, id, field, currentVal) {
