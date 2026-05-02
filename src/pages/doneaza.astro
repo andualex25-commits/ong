@@ -1,7 +1,36 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
 
-const presets = [50, 100, 200, 500];
+const { data: sectionsArr } = await supabase.from('page_sections').select('*').in('section_key', [
+  'doneaza_head', 'doneaza_side', 'doneaza_redirect', 'doneaza_transfer', 'doneaza_amounts',
+]);
+const sec: Record<string, any> = {};
+for (const s of sectionsArr || []) sec[s.section_key] = s;
+
+const head     = sec['doneaza_head']     || {};
+const side     = sec['doneaza_side']     || {};
+const redirect = sec['doneaza_redirect'] || {};
+const transfer = sec['doneaza_transfer'] || {};
+const amounts  = sec['doneaza_amounts']  || {};
+
+const { data: ciRows } = await supabase.from('contact_info').select('key,value');
+const ci: Record<string,string> = {};
+for (const r of ciRows || []) ci[r.key] = r.value || '';
+
+const presetAmounts = [
+  { amt: 50,  numKey: 'stat1_num', labelKey: 'stat1_label' },
+  { amt: 100, numKey: 'stat2_num', labelKey: 'stat2_label' },
+  { amt: 200, numKey: 'stat3_num', labelKey: 'stat3_label' },
+  { amt: 500, numKey: 'stat4_num', labelKey: 'stat4_label' },
+];
+
+const defaults: Record<string,string> = {
+  stat1_label: 'rechizite 1 copil',
+  stat2_label: 'masă caldă 1 lună',
+  stat3_label: 'transport școlar',
+  stat4_label: 'set complet de școală',
+};
 ---
 
 <Layout
@@ -10,9 +39,15 @@ const presets = [50, 100, 200, 500];
 >
   <section class="page-head">
     <div class="container">
-      <span class="eyebrow">Donează</span>
-      <h1>Transformă o viață cu o donație.</h1>
-      <p>Donație unică sau lunară, prin card. 100% din donație merge direct către copiii sprijiniți.</p>
+      <span class="eyebrow"
+        data-db-table="page_sections" data-db-id={head.id} data-db-field="eyebrow"
+      >{head.eyebrow || 'Donează'}</span>
+      <h1
+        data-db-table="page_sections" data-db-id={head.id} data-db-field="heading"
+      >{head.heading || 'Transformă o viață cu o donație.'}</h1>
+      <p
+        data-db-table="page_sections" data-db-id={head.id} data-db-field="subheading"
+      >{head.subheading || 'Donație unică sau lunară, prin card. 100% din donație merge direct către copiii sprijiniți.'}</p>
     </div>
   </section>
 
@@ -26,19 +61,16 @@ const presets = [50, 100, 200, 500];
           </div>
 
           <div class="amounts">
-            {presets.map((amt, i) => (
+            {presetAmounts.map(({ amt, numKey, labelKey }, i) => (
               <button
                 class={`amount ${i === 1 ? 'active' : ''}`}
-                data-amount={amt}
+                data-amount={amounts[numKey] || amt}
                 type="button"
               >
-                {amt} RON
-                <small>{
-                  amt === 50  ? 'rechizite 1 copil' :
-                  amt === 100 ? 'masă caldă 1 lună' :
-                  amt === 200 ? 'transport școlar' :
-                                'set complet de școală'
-                }</small>
+                {amounts[numKey] || amt} RON
+                <small
+                  data-db-table="page_sections" data-db-id={amounts.id} data-db-field={labelKey}
+                >{amounts[labelKey] || defaults[labelKey]}</small>
               </button>
             ))}
           </div>
@@ -64,28 +96,37 @@ const presets = [50, 100, 200, 500];
         </div>
 
         <div class="donate-side">
-          <h3>De ce donezi?</h3>
+          <h3
+            data-db-table="page_sections" data-db-id={side.id} data-db-field="heading"
+          >{side.heading || 'De ce donezi?'}</h3>
           <ul>
-            <li>100% din donație merge direct către copii.</li>
-            <li>Primești chitanță pe email pentru deducerea fiscală.</li>
-            <li>Donație lunară = sprijin predictibil pentru burse și hub.</li>
-            <li>Te poți opri oricând, din contul tău Stripe.</li>
+            <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat1_label">{side.stat1_label || '100% din donație merge direct către copii.'}</li>
+            <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat2_label">{side.stat2_label || 'Primești chitanță pe email pentru deducerea fiscală.'}</li>
+            <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat3_label">{side.stat3_label || 'Donație lunară = sprijin predictibil pentru burse și hub.'}</li>
+            <li data-db-table="page_sections" data-db-id={side.id} data-db-field="stat4_label">{side.stat4_label || 'Te poți opri oricând, din contul tău Stripe.'}</li>
           </ul>
 
-          <h3 style="margin-top:32px" id="redirect">Redirect 3,5% impozit</h3>
-          <p>
-            Dacă ești salariat, poți redirecționa 3,5% din impozitul pe venit
-            către asociație, fără niciun cost. Descarcă <strong>formularul 230</strong>
-            pre-completat și depune-l la ANAF până pe 25 mai.
-          </p>
-          <a href="https://formular230.ro/asociatia-educatia-schimba-destine" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Completează formularul 230 →</a>
+          <h3 style="margin-top:32px" id="redirect"
+            data-db-table="page_sections" data-db-id={redirect.id} data-db-field="heading"
+          >{redirect.heading || 'Redirect 3,5% impozit'}</h3>
+          <p
+            data-db-table="page_sections" data-db-id={redirect.id} data-db-field="subheading"
+          >{redirect.subheading || 'Dacă ești salariat, poți redirecționa 3,5% din impozitul pe venit către asociație, fără niciun cost.'}</p>
+          <a href={redirect.cta_primary_link || 'https://formular230.ro/asociatia-educatia-schimba-destine'}
+            target="_blank" rel="noopener" class="btn btn-ghost btn-sm"
+            data-db-table="page_sections" data-db-id={redirect.id} data-db-field="cta_primary_text"
+          >{redirect.cta_primary_text || 'Completează formularul 230 →'}</a>
 
-          <h3 style="margin-top:32px" id="transfer">Transfer bancar</h3>
+          <h3 style="margin-top:32px" id="transfer"
+            data-db-table="page_sections" data-db-id={transfer.id} data-db-field="heading"
+          >{transfer.heading || 'Transfer bancar'}</h3>
           <p>
             <strong>Asociația Educația Schimbă Destine</strong><br>
-            CIF: 49395736<br>
-            <span class="iban">RO30 RZBR 0000 0600 2578 2550</span><br>
-            <small>Raiffeisen Bank · București</small>
+            CIF: {ci.cif || '49395736'}<br>
+            <span class="iban">{ci.iban || 'RO30 RZBR 0000 0600 2578 2550'}</span><br>
+            <small
+              data-db-table="page_sections" data-db-id={transfer.id} data-db-field="subheading"
+            >{transfer.subheading || 'Raiffeisen Bank · București'}</small>
           </p>
         </div>
       </div>
@@ -97,7 +138,7 @@ const presets = [50, 100, 200, 500];
     let amount = 100;
 
     const tabs = document.querySelectorAll<HTMLButtonElement>('.donate-tab');
-    const amounts = document.querySelectorAll<HTMLButtonElement>('.amount');
+    const amountBtns = document.querySelectorAll<HTMLButtonElement>('.amount');
     const customInput = document.getElementById('custom-amount') as HTMLInputElement;
     const emailInput = document.getElementById('donor-email') as HTMLInputElement;
     const btn = document.getElementById('donate-btn') as HTMLButtonElement;
@@ -111,9 +152,9 @@ const presets = [50, 100, 200, 500];
       });
     });
 
-    amounts.forEach(a => {
+    amountBtns.forEach(a => {
       a.addEventListener('click', () => {
-        amounts.forEach(x => x.classList.remove('active'));
+        amountBtns.forEach(x => x.classList.remove('active'));
         a.classList.add('active');
         amount = Number(a.dataset.amount);
         customInput.value = '';
@@ -123,14 +164,13 @@ const presets = [50, 100, 200, 500];
     customInput.addEventListener('input', () => {
       const val = Number(customInput.value);
       if (val > 0) {
-        amounts.forEach(x => x.classList.remove('active'));
+        amountBtns.forEach(x => x.classList.remove('active'));
         amount = val;
       }
     });
 
     btn.addEventListener('click', async () => {
       errorEl.style.display = 'none';
-
       const email = emailInput.value.trim();
       if (!email || !email.includes('@')) {
         errorEl.textContent = 'Te rugăm să introduci un email valid pentru chitanță.';
@@ -142,10 +182,8 @@ const presets = [50, 100, 200, 500];
         errorEl.style.display = 'block';
         return;
       }
-
       btn.disabled = true;
       btn.textContent = 'Te redirecționăm către plată...';
-
       try {
         const res = await fetch('/api/create-checkout', {
           method: 'POST',
