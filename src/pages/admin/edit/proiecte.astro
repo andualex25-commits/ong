@@ -58,6 +58,8 @@ import Layout from '../../../layouts/Layout.astro';
     .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
     .btn-cancel { padding: 12px; background: #f0f0f0; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
     .btn-save { padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    .btn-delete { padding: 12px 14px; background: #fdecea; color: #b33; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
+    .btn-delete:hover { background: #f5c6c6; }
     .msg { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-top: 12px; display: none; }
 
     /* ── Add Modal ── */
@@ -104,7 +106,8 @@ import Layout from '../../../layouts/Layout.astro';
         <input id="btnLink" type="text" placeholder="/doneaza" />
       </div>
       <div class="msg" id="btnMsg"></div>
-      <div class="modal-actions" style="margin-top:20px;">
+      <div class="modal-actions" style="margin-top:20px;grid-template-columns:auto 1fr 1fr;">
+        <button class="btn-delete" id="btnDelete" title="Șterge butonul">🗑 Șterge</button>
         <button class="btn-cancel" id="btnCancel">Anulează</button>
         <button class="btn-save" id="btnSave">Salvează ✓</button>
       </div>
@@ -238,6 +241,7 @@ import Layout from '../../../layouts/Layout.astro';
       injectAdminStyles(doc);
       injectAdminBar(doc);
       injectEditHandlers(doc);
+      injectMissingButtonPlaceholders(doc);
       injectAddButtons(doc);
       injectDeleteButtons(doc);
     });
@@ -330,6 +334,15 @@ import Layout from '../../../layouts/Layout.astro';
         }
         .pos-btn:hover { background: rgba(255,255,255,0.2) !important; }
         .pos-btn.active { background: white !important; color: #333 !important; }
+        .admin-add-btn-inline {
+          display: inline-flex !important; align-items: center !important; gap: 6px !important;
+          padding: 7px 16px !important; border: 2px dashed rgba(51,102,255,0.5) !important;
+          border-radius: 8px !important; background: rgba(51,102,255,0.05) !important;
+          color: #3366ff !important; font-size: 13px !important; font-weight: 600 !important;
+          cursor: pointer !important; transition: all 0.15s !important;
+          margin: 4px 4px 0 0 !important;
+        }
+        .admin-add-btn-inline:hover { background: rgba(51,102,255,0.12) !important; border-color: #3366ff !important; }
       `;
       doc.head.appendChild(s);
     }
@@ -576,6 +589,19 @@ import Layout from '../../../layouts/Layout.astro';
       }
     };
 
+    document.getElementById('btnDelete').onclick = async () => {
+      const { table, id, textField, linkField } = btnState;
+      if (!confirm('Ștergi butonul? Poate fi adăugat din nou mai târziu.')) return;
+      showMsg('btnMsg', 'Se șterge...', 'info');
+      try {
+        await dbPatch(table, id, { [textField]: null, [linkField]: null });
+        showMsg('btnMsg', '✓ Buton șters! Se reîncarcă...', 'ok');
+        setTimeout(() => { closeBtnModal(); reloadFrame(); }, 900);
+      } catch(e) {
+        showMsg('btnMsg', 'Eroare: ' + e.message, 'err');
+      }
+    };
+
     // ── Edit Modal ──────────────────────────────────────────────────────────
     function openEditModal(table, id, field, currentVal) {
       editState = { table, id, field };
@@ -723,6 +749,31 @@ import Layout from '../../../layouts/Layout.astro';
         },
       });
     };
+
+    function injectMissingButtonPlaceholders(doc) {
+      doc.querySelectorAll('.hero-cta').forEach(cta => {
+        const parentWithId = cta.closest('[data-db-id]') || cta.parentElement?.closest('[data-db-id]');
+        const resolvedId = parentWithId?.dataset?.dbId;
+        if (!resolvedId) return;
+        const table = parentWithId?.dataset?.dbTable || 'featured_projects';
+
+        [
+          { field: 'cta_primary_text', label: '+ Buton primar' },
+          { field: 'cta_secondary_text', label: '+ Buton secundar' },
+        ].forEach(({ field, label }) => {
+          const existing = cta.querySelector(`[data-db-field="${field}"]`);
+          if (existing) return;
+          const ph = doc.createElement('button');
+          ph.className = 'admin-add-btn-inline';
+          ph.textContent = label;
+          ph.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            openBtnModal(table, resolvedId, field, field.replace('_text', '_link'), '', '');
+          });
+          cta.appendChild(ph);
+        });
+      });
+    }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
     function reloadFrame() {

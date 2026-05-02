@@ -28,7 +28,6 @@ for (const s of sectionsArr) sections[s.section_key] = s;
 const mission   = sections['home_mission']      || {};
 const storiesSec = sections['home_stories']     || {};
 const donateSec  = sections['home_donate']      || {};
-const transpSec  = sections['home_transparency'] || {};
 const founderSec = sections['home_founder']     || {};
 const partnerSec = sections['home_partners']    || {};
 ---
@@ -289,40 +288,5 @@ const partnerSec = sections['home_partners']    || {};
     </div>
   </section>
 
-  <!-- ══ TRANSPARENȚĂ ═══════════════════════════════════════════════════════ -->
-  <section>
-    <div class="container">
-      <div class="transparency">
-        <span class="eyebrow"
-          data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="eyebrow"
-        >{transpSec.eyebrow || 'Transparență totală'}</span>
-        <h2 data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="heading"
-        >{transpSec.heading || 'Știi exact unde ajung banii tăi.'}</h2>
-        <p data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="subheading"
-        >{transpSec.subheading || 'Publicăm rapoarte anuale, bilanț contabil și detalii despre fiecare proiect. Încrederea ta e baza muncii noastre.'}</p>
-        <div class="transparency-grid">
-          <div class="t-stat">
-            <div class="num" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat1_num">{transpSec.stat1_num || '87%'}</div>
-            <div class="label" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat1_label">{transpSec.stat1_label || 'direct către copii'}</div>
-          </div>
-          <div class="t-stat">
-            <div class="num" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat2_num">{transpSec.stat2_num || '9%'}</div>
-            <div class="label" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat2_label">{transpSec.stat2_label || 'logistică'}</div>
-          </div>
-          <div class="t-stat">
-            <div class="num" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat3_num">{transpSec.stat3_num || '4%'}</div>
-            <div class="label" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat3_label">{transpSec.stat3_label || 'administrativ'}</div>
-          </div>
-          <div class="t-stat">
-            <div class="num" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat4_num">{transpSec.stat4_num || '0%'}</div>
-            <div class="label" data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="stat4_label">{transpSec.stat4_label || 'publicitate plătită'}</div>
-          </div>
-        </div>
-        <p style="opacity:.7;font-size:0.85rem"
-          data-db-table="page_sections" data-db-id={transpSec.id} data-db-field="note_text"
-        >{transpSec.note_text || 'Procentele sunt ilustrative — înlocuiește cu cifre reale din bilanțul 2024.'}</p>
-      </div>
-    </div>
-  </section>
 
 </Layout>
