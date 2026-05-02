@@ -314,6 +314,22 @@ import Layout from '../../../layouts/Layout.astro';
         .story { position: relative !important; overflow: visible !important; }
         .project:hover .admin-delete-btn,
         .story:hover .admin-delete-btn { opacity: 1 !important; }
+        .admin-pos-picker {
+          position: absolute !important; bottom: 8px !important; left: 8px !important;
+          background: rgba(0,0,0,0.6) !important; border-radius: 8px !important;
+          padding: 8px 10px !important; z-index: 100 !important;
+          opacity: 0 !important; transition: opacity 0.15s !important;
+          pointer-events: none !important;
+        }
+        .story-image:hover .admin-pos-picker { opacity: 1 !important; pointer-events: auto !important; }
+        .pos-btn {
+          padding: 3px 9px !important; border: 1px solid rgba(255,255,255,0.4) !important;
+          border-radius: 5px !important; background: transparent !important;
+          color: white !important; font-size: 11px !important; font-weight: 600 !important;
+          cursor: pointer !important; transition: background 0.12s !important;
+        }
+        .pos-btn:hover { background: rgba(255,255,255,0.2) !important; }
+        .pos-btn.active { background: white !important; color: #333 !important; }
       `;
       doc.head.appendChild(s);
     }
@@ -496,7 +512,35 @@ import Layout from '../../../layouts/Layout.astro';
           confirmDelete(tbl, id, name);
         });
         card.appendChild(btn);
+        injectPositionPicker(doc, card, id);
       });
+    }
+
+    function injectPositionPicker(doc, card, storyId) {
+      const imgWrap = card.querySelector('.story-image');
+      if (!imgWrap) return;
+      const current = imgWrap.style.getPropertyValue('--img-pos') || 'top';
+      const picker = doc.createElement('div');
+      picker.className = 'admin-pos-picker';
+      picker.innerHTML = `
+        <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);margin-bottom:4px;display:block;">Poziție foto</span>
+        <div style="display:flex;gap:4px;">
+          <button data-pos="top"    class="pos-btn${current==='top'?' active':''}">Sus</button>
+          <button data-pos="center" class="pos-btn${current==='center'?' active':''}">Centru</button>
+          <button data-pos="bottom" class="pos-btn${current==='bottom'?' active':''}">Jos</button>
+        </div>
+      `;
+      picker.querySelectorAll('.pos-btn').forEach(b => {
+        b.addEventListener('click', async (e) => {
+          e.preventDefault(); e.stopPropagation();
+          const pos = b.dataset.pos;
+          await dbPatch('beneficiary_stories', storyId, { image_position: pos });
+          imgWrap.style.setProperty('--img-pos', pos);
+          picker.querySelectorAll('.pos-btn').forEach(x => x.classList.remove('active'));
+          b.classList.add('active');
+        });
+      });
+      imgWrap.appendChild(picker);
     }
 
     // ── Button Modal (text + link) ──────────────────────────────────────────

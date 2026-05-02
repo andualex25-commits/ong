@@ -206,6 +206,7 @@ const partnerSec = sections['home_partners']    || {};
           <article class="story">
             <div class={`story-image ${String.fromCharCode(97 + i)}`}
               data-db-table="beneficiary_stories" data-db-id={story.id} data-db-field="image_url"
+              style={`--img-pos:${story.image_position || 'top'}`}
             >
               {story.image_url
                 ? <img src={story.image_url} alt={story.image_alt || story.title} style="width:100%;height:100%;object-fit:cover;" />
