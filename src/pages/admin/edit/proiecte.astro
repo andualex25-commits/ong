@@ -100,6 +100,30 @@ import Layout from '../../../layouts/Layout.astro';
     </div>
   </div>
 
+  <!-- Gallery Manager Modal -->
+  <div id="galleryModal" class="modal-bg">
+    <div class="modal-box" style="max-width:620px;">
+      <button class="modal-close" id="galleryClose">✕</button>
+      <h2 style="margin:0 0 6px;">📷 Galerie fotografii</h2>
+      <p style="font-size:13px;color:#888;margin:0 0 20px;">Adaugă mai multe fotografii pentru acest proiect. Vor apărea ca un carousel cu fade.</p>
+
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-weight:600;font-size:13px;color:#444;margin-bottom:8px;">Descriere fotografie (opțional)</label>
+        <input id="galleryCaption" type="text" placeholder="ex: Sala de clasă renovată" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:7px;box-sizing:border-box;font-size:14px;font-family:inherit;" />
+      </div>
+      <button id="galleryAddBtn" style="width:100%;padding:14px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;margin-bottom:24px;">+ Adaugă fotografie</button>
+
+      <div style="border-top:1px solid #f0f0f0;padding-top:16px;">
+        <div style="font-weight:600;font-size:13px;color:#444;margin-bottom:12px;">Fotografii adăugate</div>
+        <div id="galleryList"></div>
+      </div>
+
+      <div style="margin-top:24px;text-align:right;">
+        <button id="galleryDone" style="padding:12px 28px;background:var(--primary);color:white;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;">Gata ✓</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Add Modal -->
   <div id="addModal" class="modal-bg">
     <div class="modal-box add-modal-box">
@@ -212,7 +236,7 @@ import Layout from '../../../layouts/Layout.astro';
           transition: filter 0.15s;
         }
         [data-db-field="image_url"]::after {
-          content: "📷  Clică pentru a încărca fotografie";
+          content: "📷  Clică pentru galerie foto";
           position: absolute; inset: 0;
           display: flex; align-items: center; justify-content: center;
           background: rgba(51,102,255,0.75);
@@ -281,7 +305,10 @@ import Layout from '../../../layouts/Layout.astro';
           e.stopPropagation();
           const { dbTable, dbId, dbField } = el.dataset;
 
-          if (dbField === 'image_url') {
+          if (dbField === 'image_url' && dbTable === 'featured_projects') {
+            // Open gallery manager for project carousel
+            openGalleryManager(dbId);
+          } else if (dbField === 'image_url') {
             const currentUrl = el.querySelector('img')?.src || '';
             AdminUploader.open({
               supabaseUrl: SUPABASE_URL,
@@ -300,6 +327,86 @@ import Layout from '../../../layouts/Layout.astro';
         });
       });
     }
+
+    // ── Gallery Manager ────────────────────────────────────────────────────
+    let galleryProjectId = null;
+
+    async function openGalleryManager(projectId) {
+      galleryProjectId = projectId;
+      document.getElementById('galleryModal').classList.add('open');
+      await refreshGalleryList();
+    }
+
+    function closeGalleryModal() {
+      document.getElementById('galleryModal').classList.remove('open');
+      galleryProjectId = null;
+      reloadFrame();
+    }
+
+    async function refreshGalleryList() {
+      const list = document.getElementById('galleryList');
+      list.innerHTML = '<p style="color:#999;font-size:13px;">Se încarcă...</p>';
+      const images = await dbFetch(`project_images?project_id=eq.${galleryProjectId}&order=order_index`);
+      if (!images.length) {
+        list.innerHTML = '<p style="color:#999;font-size:13px;text-align:center;padding:16px 0;">Nicio fotografie adăugată încă.</p>';
+        return;
+      }
+      list.innerHTML = '';
+      images.forEach((img, idx) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f0;';
+        item.innerHTML = `
+          <img src="${img.image_url}" style="width:64px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;" />
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${img.caption || '(fără descriere)'}</div>
+            <div style="font-size:11px;color:#bbb;margin-top:2px;">Poziție ${idx + 1}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            ${idx > 0 ? `<button onclick="moveGalleryImg('${img.id}', ${img.order_index - 1})" style="padding:4px 8px;border:1px solid #ddd;border-radius:5px;cursor:pointer;font-size:13px;background:white;">↑</button>` : ''}
+            ${idx < images.length - 1 ? `<button onclick="moveGalleryImg('${img.id}', ${img.order_index + 1})" style="padding:4px 8px;border:1px solid #ddd;border-radius:5px;cursor:pointer;font-size:13px;background:white;">↓</button>` : ''}
+            <button onclick="deleteGalleryImg('${img.id}')" style="padding:4px 8px;border:1px solid #fca5a5;border-radius:5px;cursor:pointer;font-size:13px;background:#fff0f0;color:#dc2626;">✕</button>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    window.deleteGalleryImg = async (id) => {
+      if (!confirm('Ștergi această fotografie?')) return;
+      await dbDelete('project_images', id);
+      await refreshGalleryList();
+    };
+
+    window.moveGalleryImg = async (id, newOrder) => {
+      await dbPatch('project_images', id, { order_index: newOrder });
+      await refreshGalleryList();
+    };
+
+    document.getElementById('galleryAddBtn').addEventListener('click', () => {
+      AdminUploader.open({
+        supabaseUrl: SUPABASE_URL,
+        supabaseKey: SUPABASE_KEY,
+        getToken,
+        currentUrl: '',
+        title: 'Adaugă fotografie la galerie',
+        onSave: async (url) => {
+          const caption = document.getElementById('galleryCaption')?.value?.trim() || null;
+          const existing = await dbFetch(`project_images?project_id=eq.${galleryProjectId}&select=id`);
+          await dbPost('project_images', {
+            project_id: galleryProjectId,
+            image_url: url,
+            caption,
+            order_index: existing.length + 1,
+          });
+          if (document.getElementById('galleryCaption')) document.getElementById('galleryCaption').value = '';
+          await refreshGalleryList();
+        },
+      });
+    });
+
+    document.getElementById('galleryClose').onclick = closeGalleryModal;
+    document.getElementById('galleryDone').onclick = closeGalleryModal;
+    document.getElementById('galleryModal').onclick = (e) => { if (e.target === document.getElementById('galleryModal')) closeGalleryModal(); };
 
     function injectAddButtons(doc) {
       doc.querySelectorAll('[data-db-section-add]').forEach(section => {

@@ -175,6 +175,55 @@ section.tight { padding: 64px 0; }
   position: absolute; inset: 0; display: grid; place-items: center;
   color: rgba(255,255,255,0.9); font-size: 0.85rem;
 }
+
+/* Project image carousel */
+.project-carousel {
+  aspect-ratio: 4/3;
+  background: linear-gradient(135deg, #e07a3c 0%, #f4b584 100%);
+  border-radius: var(--radius); position: relative; overflow: hidden;
+}
+.project-carousel .ph {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: rgba(255,255,255,0.9); font-size: 0.85rem;
+}
+.carousel-track { position: absolute; inset: 0; }
+.carousel-slide {
+  position: absolute; inset: 0;
+  opacity: 0; transition: opacity 0.7s ease;
+  pointer-events: none;
+}
+.carousel-slide.active { opacity: 1; pointer-events: auto; }
+.carousel-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.carousel-caption {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 10px 14px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.55));
+  color: white; font-size: 0.8rem; text-align: center;
+}
+.carousel-prev, .carousel-next {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(0,0,0,0.35); color: white; border: none;
+  width: 36px; height: 36px; border-radius: 50%;
+  font-size: 20px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s; z-index: 10;
+  opacity: 0; transition: opacity 0.2s;
+}
+.project-carousel:hover .carousel-prev,
+.project-carousel:hover .carousel-next { opacity: 1; }
+.carousel-prev { left: 10px; }
+.carousel-next { right: 10px; }
+.carousel-prev:hover, .carousel-next:hover { background: rgba(0,0,0,0.6); }
+.carousel-dots {
+  position: absolute; bottom: 10px; left: 0; right: 0;
+  display: flex; justify-content: center; gap: 6px; z-index: 10;
+}
+.carousel-dot {
+  width: 7px; height: 7px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,0.5); cursor: pointer;
+  transition: background 0.2s, transform 0.2s; padding: 0;
+}
+.carousel-dot.active { background: white; transform: scale(1.3); }
 .project-meta { display: flex; gap: 24px; flex-wrap: wrap; margin: 24px 0; }
 .project-meta div { font-size: 0.9rem; }
 .project-meta strong { display: block; font-family: var(--serif); font-size: 1.1rem; color: #fff; }
