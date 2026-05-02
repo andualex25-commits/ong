@@ -478,7 +478,7 @@ import Layout from '../../../layouts/Layout.astro';
       if (!confirm('Ștergi butonul? Poate fi adăugat din nou mai târziu.')) return;
       showMsg('btnMsg', 'Se șterge...', 'info');
       try {
-        await dbPatch(table, id, { [textField]: null, [linkField]: null });
+        await dbPatch(table, id, { [textField]: '', [linkField]: '' });
         showMsg('btnMsg', '✓ Buton șters! Se reîncarcă...', 'ok');
         setTimeout(() => { closeBtnModal(); reloadFrame(); }, 900);
       } catch(e) {

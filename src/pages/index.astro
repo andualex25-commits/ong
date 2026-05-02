@@ -239,23 +239,26 @@ const partnerSec = sections['home_partners']    || {};
           data-db-table="founder_story" data-db-id={founder.id} data-db-field="image_url"
         >
           {founder.image_url
-            ? <img src={founder.image_url} alt={founder.image_alt || founder.author_name || 'Lamiita Purcaru'} style="width:100%;height:100%;object-fit:cover;border-radius:12px;" />
-            : <div class="ph">{founder.author_name || 'Lamiita Purcaru'}</div>
+            ? <img src={founder.image_url} alt={founder.image_alt || founder.author_name || 'Lamiita Purcaru'} style="width:100%;height:100%;object-fit:cover;border-radius:8px;" />
+            : <div class="ph">{founder.author_name || 'Lamiita Purcaru'}<br>(foto)</div>
           }
         </div>
         <div>
           <span class="eyebrow"
             data-db-table="founder_story" data-db-id={founder.id} data-db-field="eyebrow"
           >{founder.eyebrow || 'Povestea din spatele asociației'}</span>
-          <blockquote
+          <blockquote>„<span
             data-db-table="founder_story" data-db-id={founder.id} data-db-field="quote"
-          >„{founder.quote}"</blockquote>
-          <p
-            data-db-table="founder_story" data-db-id={founder.id} data-db-field="description"
-          >{founder.description}</p>
-          <p class="founder-author"
-            data-db-table="founder_story" data-db-id={founder.id} data-db-field="author_name"
-          >{founder.author_name}<small>{founder.author_title}</small></p>
+          >{founder.quote || 'Pe mine educația m-a salvat.'}</span>"</blockquote>
+          {founder.description && (
+            <p>{founder.description.length > 400 ? founder.description.slice(0, 400).trimEnd() + '…' : founder.description}</p>
+          )}
+          <p class="founder-author">
+            <span data-db-table="founder_story" data-db-id={founder.id} data-db-field="author_name"
+            >{founder.author_name || 'Lamiita Purcaru'}</span>
+            <small data-db-table="founder_story" data-db-id={founder.id} data-db-field="author_title"
+            >{founder.author_title || 'Președinte & Fondatoare'}</small>
+          </p>
           <a href={founderSec.cta_primary_link || '/despre'} class="btn btn-ghost btn-sm"
             data-db-table="page_sections" data-db-id={founderSec.id} data-db-field="cta_primary_text"
           >{founderSec.cta_primary_text || 'Citește povestea completă →'}</a>
